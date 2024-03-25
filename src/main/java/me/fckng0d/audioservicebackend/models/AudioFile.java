@@ -45,7 +45,7 @@ public class AudioFile {
     private Float duration;
 
     @ElementCollection
-    @NotNull
+//    @NotNull
     private List<String> genres;
 
     @Lob

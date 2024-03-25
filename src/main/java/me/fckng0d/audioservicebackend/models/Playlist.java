@@ -41,5 +41,6 @@ public class Playlist {
     private Image image = null;
 
     @ManyToMany
+    @OrderColumn(name = "audio_order")
     private List<AudioFile> audioFiles = new ArrayList<>();
 }

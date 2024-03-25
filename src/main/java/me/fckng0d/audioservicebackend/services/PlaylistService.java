@@ -7,20 +7,27 @@ import me.fckng0d.audioservicebackend.repositories.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositories.ImageRepository;
 import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 
 @Service
 public class PlaylistService {
     private final AudioFileRepository audioFileRepository;
     private final PlaylistRepository playlistRepository;
     private final ImageRepository imageRepository;
+
+    private final Semaphore semaphore = new Semaphore(1);
+
 
     @Autowired
     public PlaylistService(AudioFileRepository audioFileRepository, PlaylistRepository playlistRepository, ImageRepository imageRepository) {
@@ -33,8 +40,9 @@ public class PlaylistService {
         return playlistRepository.findAll();
     }
 
-//    @Transactional
+    //    @Transactional
     @Transactional(readOnly = true)
+//    @Cacheable(cacheNames="playlist")
     public Playlist getPlaylistById(UUID id) {
         return playlistRepository.getPlaylistsById(id);
     }
@@ -62,13 +70,14 @@ public class PlaylistService {
     }
 
 
+    //    @CacheEvict(cacheNames="playlist")
     public void addAudioFile(Playlist playlist, MultipartFile audioFile, MultipartFile imageFile,
                              String title, String author, List<String> genres, Float duration) {
         AudioFile audio = new AudioFile();
         audio.setFileName(audioFile.getOriginalFilename());
         audio.setTitle(title);
         audio.setAuthor(author);
-        audio.setGenres(genres);
+//        audio.setGenres(genres);
         audio.setDuration(duration);
 
         try {
@@ -99,9 +108,37 @@ public class PlaylistService {
         playlistRepository.save(playlist);
     }
 
-    public List<AudioFile> getAllAudioFilesInPlaylistById(UUID id) {
-        Playlist playlist = playlistRepository.getPlaylistsById(id);
-        return playlist != null ? playlist.getAudioFiles() : Collections.emptyList();
-    }
+    @Transactional
+    public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) {
+        try {
+            semaphore.acquire();
 
+            Playlist existingPlaylist = playlistRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException());
+
+            System.out.println("\n### обновлено ###");
+            List<AudioFile> newAudioFiles = new ArrayList<>();
+            for (AudioFile updatedAudioFile : updatedAudioFiles) {
+                AudioFile existingAudioFile = existingPlaylist.getAudioFiles().stream()
+                        .filter(audioFile -> audioFile.getId().equals(updatedAudioFile.getId()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
+
+                newAudioFiles.add(existingAudioFile);
+                System.out.println(updatedAudioFile.getTitle());
+
+            }
+
+            existingPlaylist.setAudioFiles(newAudioFiles);
+
+            playlistRepository.save(existingPlaylist);
+            System.out.println();
+
+            playlistRepository.save(existingPlaylist);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            semaphore.release();
+        }
+    }
 }

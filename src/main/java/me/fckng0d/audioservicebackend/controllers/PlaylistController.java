@@ -10,6 +10,8 @@ import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
 import me.fckng0d.audioservicebackend.services.AudioFileService;
 import me.fckng0d.audioservicebackend.services.PlaylistService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -94,12 +96,9 @@ public class PlaylistController {
 
     @GetMapping("/playlists/{id}")
     @Transactional(readOnly = true)
+//    @Cacheable(cacheNames = {"playlist", "audio_file", "image"})
     public ResponseEntity<PlaylistDTO> getPlaylistById(@PathVariable UUID id) {
         long startTime = System.currentTimeMillis();
-
-//        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-//        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-//        TransactionStatus status = transactionManager.getTransaction(def);
 
         try {
             Optional<Playlist> optionalPlaylist = Optional.ofNullable(playlistService.getPlaylistById(id));
@@ -115,7 +114,6 @@ public class PlaylistController {
                 playlistDTO.setCountOfAudio(playlist.getCountOfAudio());
                 playlistDTO.setImage(playlist.getImage());
 
-//                List<AudioFile> audioFiles = playlist.getAudioFiles();
 
                 List<AudioFileDTO> audioFileDTOs = playlist.getAudioFiles().stream()
                         .map(audioFile -> {
@@ -134,7 +132,12 @@ public class PlaylistController {
 
                 playlistDTO.setAudioFiles(audioFileDTOs);
 
-//                transactionManager.commit(status);
+
+                System.out.println("\nGET");
+                for (AudioFileDTO audioFileDTO : audioFileDTOs) {
+                    System.out.println(audioFileDTO.getTitle());
+                }
+                System.out.println();
 
                 long endTime = System.currentTimeMillis();
                 System.out.println("Время загрузки плейлиста: " + (endTime - startTime) + " мс");
@@ -146,7 +149,6 @@ public class PlaylistController {
 
         } catch (Exception e) {
             e.printStackTrace();
-//            transactionManager.rollback(status);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -167,12 +169,13 @@ public class PlaylistController {
     }
 
     @PostMapping("/playlists/{id}/upload")
+//    @CacheEvict(cacheNames="playlist", key="#id")
     public ResponseEntity<String> uploadAudioFile(@PathVariable UUID id,
                                                   @RequestParam("title") String title,
                                                   @RequestParam("author") String author,
                                                   @RequestParam("audioFile") MultipartFile audioFile,
                                                   @RequestParam("imageFile") MultipartFile imageFile,
-                                                  @RequestParam("genres") List<String> genres,
+//                                                  @RequestParam("genres") List<String> genres,
                                                   @RequestParam("duration") Float duration) {
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
@@ -182,7 +185,7 @@ public class PlaylistController {
         try {
             Playlist playlist = playlistRepository.getPlaylistsById(id);
 
-            playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, genres, duration);
+            playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
 
             transactionManager.commit(status);
 
@@ -193,4 +196,11 @@ public class PlaylistController {
             return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PutMapping("/playlists/{id}/update")
+    public ResponseEntity<String> updatePlaylist(@PathVariable UUID id, @RequestBody List<AudioFile> updatedAudioFiles) {
+        playlistService.updatePlaylist(id, updatedAudioFiles);
+        return new ResponseEntity<>("Playlist updated successfully", HttpStatus.OK);
+    }
+
 }
