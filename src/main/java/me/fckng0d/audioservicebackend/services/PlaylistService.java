@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class PlaylistService {
@@ -27,6 +28,7 @@ public class PlaylistService {
     private final ImageRepository imageRepository;
 
     private final Semaphore semaphore = new Semaphore(1);
+    private final AtomicInteger countOfRequests = new AtomicInteger(0);
 
 
     @Autowired
@@ -109,10 +111,10 @@ public class PlaylistService {
     }
 
     @Transactional
-    public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) {
+    public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) throws InterruptedException {
+        countOfRequests.incrementAndGet();
+        semaphore.acquire();
         try {
-            semaphore.acquire();
-
             Playlist existingPlaylist = playlistRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException());
 
@@ -130,28 +132,34 @@ public class PlaylistService {
             existingPlaylist.setAudioFiles(newAudioFiles);
 
             playlistRepository.save(existingPlaylist);
-
-            playlistRepository.save(existingPlaylist);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } finally {
+            countOfRequests.decrementAndGet();
             semaphore.release();
         }
     }
 
+    public boolean hasQueuedThreads() {
+        return countOfRequests.get() == 0;
+    }
+
     @Transactional
-    public void deleteAudioFile(UUID playlistId, UUID  audioFileId) {
-        Playlist existingPlaylist = playlistRepository.findById(playlistId)
-                .orElseThrow(() -> new RuntimeException());
+    public void deleteAudioFile(UUID playlistId, UUID audioFileId) {
+        countOfRequests.incrementAndGet();
+        try {
+            Playlist existingPlaylist = playlistRepository.findById(playlistId)
+                    .orElseThrow(() -> new RuntimeException());
 
-        AudioFile existingAudioFile = existingPlaylist.getAudioFiles().stream()
-                .filter(audioFile -> audioFile.getId().equals(audioFileId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
+            AudioFile existingAudioFile = existingPlaylist.getAudioFiles().stream()
+                    .filter(audioFile -> audioFile.getId().equals(audioFileId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
-        existingPlaylist.getAudioFiles().remove(existingAudioFile);
-        existingPlaylist.setCountOfAudio(existingPlaylist.getCountOfAudio() - 1);
-        existingPlaylist.setDuration(existingPlaylist.getDuration() - existingAudioFile.getDuration());
-        playlistRepository.save(existingPlaylist);
+            existingPlaylist.getAudioFiles().remove(existingAudioFile);
+            existingPlaylist.setCountOfAudio(existingPlaylist.getCountOfAudio() - 1);
+            existingPlaylist.setDuration(existingPlaylist.getDuration() - existingAudioFile.getDuration());
+            playlistRepository.save(existingPlaylist);
+        } finally {
+            countOfRequests.decrementAndGet();
+        }
     }
 }

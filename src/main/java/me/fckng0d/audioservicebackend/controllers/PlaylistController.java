@@ -192,14 +192,29 @@ public class PlaylistController {
 
     @PutMapping("/playlists/{id}/update")
     public ResponseEntity<String> updatePlaylist(@PathVariable UUID id, @RequestBody List<AudioFile> updatedAudioFiles) {
-        playlistService.updatePlaylist(id, updatedAudioFiles);
-        return new ResponseEntity<>("Playlist updated successfully", HttpStatus.OK);
+        try {
+            playlistService.updatePlaylist(id, updatedAudioFiles);
+//            Thread.sleep(100);
+            while (!playlistService.hasQueuedThreads()) {
+                Thread.sleep(1);
+            }
+            return new ResponseEntity<>("Playlist updated successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update playlist", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @DeleteMapping("/playlists/{playlistId}/delete/{audioFileId}")
     public ResponseEntity<String> deleteAudioFileFromPlaylist(@PathVariable UUID playlistId, @PathVariable UUID audioFileId) {
-        playlistService.deleteAudioFile(playlistId, audioFileId);
-        return new ResponseEntity<>("Audiofile deleted successfully", HttpStatus.OK);
+        try {
+            playlistService.deleteAudioFile(playlistId, audioFileId);
+            while (!playlistService.hasQueuedThreads()) {
+                Thread.sleep(1);
+            }
+            return new ResponseEntity<>("Audiofile deleted successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete audiofile", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
