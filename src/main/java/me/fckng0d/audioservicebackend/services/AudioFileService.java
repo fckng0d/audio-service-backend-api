@@ -72,7 +72,7 @@ public class AudioFileService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable("audio_file")
+//    @Cacheable("audio_file")
     public AudioFile getAudioFileById(UUID id) {
         return audioFileRepository.getAudioFileById(id);
     }

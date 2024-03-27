@@ -116,7 +116,6 @@ public class PlaylistService {
             Playlist existingPlaylist = playlistRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException());
 
-            System.out.println("\n### обновлено ###");
             List<AudioFile> newAudioFiles = new ArrayList<>();
             for (AudioFile updatedAudioFile : updatedAudioFiles) {
                 AudioFile existingAudioFile = existingPlaylist.getAudioFiles().stream()
@@ -125,14 +124,12 @@ public class PlaylistService {
                         .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
                 newAudioFiles.add(existingAudioFile);
-                System.out.println(updatedAudioFile.getTitle());
 
             }
 
             existingPlaylist.setAudioFiles(newAudioFiles);
 
             playlistRepository.save(existingPlaylist);
-            System.out.println();
 
             playlistRepository.save(existingPlaylist);
         } catch (InterruptedException e) {
@@ -140,5 +137,21 @@ public class PlaylistService {
         } finally {
             semaphore.release();
         }
+    }
+
+    @Transactional
+    public void deleteAudioFile(UUID playlistId, UUID  audioFileId) {
+        Playlist existingPlaylist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new RuntimeException());
+
+        AudioFile existingAudioFile = existingPlaylist.getAudioFiles().stream()
+                .filter(audioFile -> audioFile.getId().equals(audioFileId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
+
+        existingPlaylist.getAudioFiles().remove(existingAudioFile);
+        existingPlaylist.setCountOfAudio(existingPlaylist.getCountOfAudio() - 1);
+        existingPlaylist.setDuration(existingPlaylist.getDuration() - existingAudioFile.getDuration());
+        playlistRepository.save(existingPlaylist);
     }
 }

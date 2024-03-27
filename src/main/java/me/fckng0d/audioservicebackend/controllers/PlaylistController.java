@@ -132,13 +132,6 @@ public class PlaylistController {
 
                 playlistDTO.setAudioFiles(audioFileDTOs);
 
-
-                System.out.println("\nGET");
-                for (AudioFileDTO audioFileDTO : audioFileDTOs) {
-                    System.out.println(audioFileDTO.getTitle());
-                }
-                System.out.println();
-
                 long endTime = System.currentTimeMillis();
                 System.out.println("Время загрузки плейлиста: " + (endTime - startTime) + " мс");
 
@@ -201,6 +194,12 @@ public class PlaylistController {
     public ResponseEntity<String> updatePlaylist(@PathVariable UUID id, @RequestBody List<AudioFile> updatedAudioFiles) {
         playlistService.updatePlaylist(id, updatedAudioFiles);
         return new ResponseEntity<>("Playlist updated successfully", HttpStatus.OK);
+    }
+
+    @DeleteMapping("/playlists/{playlistId}/delete/{audioFileId}")
+    public ResponseEntity<String> deleteAudioFileFromPlaylist(@PathVariable UUID playlistId, @PathVariable UUID audioFileId) {
+        playlistService.deleteAudioFile(playlistId, audioFileId);
+        return new ResponseEntity<>("Audiofile deleted successfully", HttpStatus.OK);
     }
 
 }

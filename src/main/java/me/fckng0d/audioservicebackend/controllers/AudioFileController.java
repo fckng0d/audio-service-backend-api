@@ -83,7 +83,7 @@ public class AudioFileController {
 
 
     @GetMapping("/audio/{id}")
-    @Cacheable("audio_file")
+//    @Cacheable("audio_file")
     public ResponseEntity<byte[]> getAudioFile(@PathVariable UUID id) {
         try {
             Optional<AudioFile> optionalAudioFile = Optional.ofNullable(audioFileService.getAudioFileById(id));
