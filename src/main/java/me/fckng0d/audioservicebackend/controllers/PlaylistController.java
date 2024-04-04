@@ -101,7 +101,7 @@ public class PlaylistController {
         long startTime = System.currentTimeMillis();
 
         try {
-            Optional<Playlist> optionalPlaylist = Optional.ofNullable(playlistService.getPlaylistById(id));
+            Optional<Playlist> optionalPlaylist = playlistService.getPlaylistById(id);
 
             if (optionalPlaylist.isPresent()) {
                 Playlist playlist = optionalPlaylist.get();
@@ -122,7 +122,6 @@ public class PlaylistController {
                             dto.setFileName(audioFile.getFileName());
                             dto.setTitle(audioFile.getTitle());
                             dto.setAuthor(audioFile.getAuthor());
-//                            dto.setData(audioFile.getData());
                             dto.setDuration(audioFile.getDuration());
                             dto.setGenres(audioFile.getGenres());
                             dto.setImage(audioFile.getImage());
@@ -133,7 +132,7 @@ public class PlaylistController {
                 playlistDTO.setAudioFiles(audioFileDTOs);
 
                 long endTime = System.currentTimeMillis();
-                System.out.println("Время загрузки плейлиста: " + (endTime - startTime) + " мс");
+//                System.out.println("Время загрузки плейлиста: " + (endTime - startTime) + " мс");
 
                 return new ResponseEntity<>(playlistDTO, HttpStatus.OK);
             } else {
@@ -176,7 +175,8 @@ public class PlaylistController {
         TransactionStatus status = transactionManager.getTransaction(def);
 
         try {
-            Playlist playlist = playlistRepository.getPlaylistsById(id);
+            Playlist playlist = playlistRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
 
             playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
 
@@ -194,10 +194,9 @@ public class PlaylistController {
     public ResponseEntity<String> updatePlaylist(@PathVariable UUID id, @RequestBody List<AudioFile> updatedAudioFiles) {
         try {
             playlistService.updatePlaylist(id, updatedAudioFiles);
-//            Thread.sleep(100);
-            while (!playlistService.hasQueuedThreads()) {
-                Thread.sleep(1);
-            }
+//            while (!playlistService.hasQueuedThreads()) {
+//                Thread.sleep(1);
+//            }
             return new ResponseEntity<>("Playlist updated successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to update playlist", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -208,11 +207,13 @@ public class PlaylistController {
     public ResponseEntity<String> deleteAudioFileFromPlaylist(@PathVariable UUID playlistId, @PathVariable UUID audioFileId) {
         try {
             playlistService.deleteAudioFile(playlistId, audioFileId);
-            while (!playlistService.hasQueuedThreads()) {
-                Thread.sleep(1);
-            }
+//            while (!playlistService.hasQueuedThreads()) {
+//                Thread.sleep(1);
+//            }
+//            System.out.println    ("Удалено.\n###########################\n\n");
             return new ResponseEntity<>("Audiofile deleted successfully", HttpStatus.OK);
         } catch (Exception e) {
+            e.printStackTrace();
             return new ResponseEntity<>("Failed to delete audiofile", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -13,10 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AudioFileService {
@@ -73,7 +70,7 @@ public class AudioFileService {
 
     @Transactional(readOnly = true)
 //    @Cacheable("audio_file")
-    public AudioFile getAudioFileById(UUID id) {
+    public Optional<AudioFile> getAudioFileById(UUID id) {
         return audioFileRepository.getAudioFileById(id);
     }
 

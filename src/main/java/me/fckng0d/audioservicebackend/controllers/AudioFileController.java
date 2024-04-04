@@ -86,15 +86,13 @@ public class AudioFileController {
 //    @Cacheable("audio_file")
     public ResponseEntity<byte[]> getAudioFile(@PathVariable UUID id) {
         try {
-            Optional<AudioFile> optionalAudioFile = Optional.ofNullable(audioFileService.getAudioFileById(id));
+            AudioFile audioFile = audioFileService.getAudioFileById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
-            if (optionalAudioFile.isPresent()) {
-                AudioFile audioFile = optionalAudioFile.get();
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-                headers.setContentLength(audioFile.getData().length);
-                headers.set("Accept-Ranges", "bytes");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentLength(audioFile.getData().length);
+            headers.set("Accept-Ranges", "bytes");
 
 //                String encodedFileName = Base64.getEncoder()
 //                        .encodeToString(audioFile.getFileName().getBytes(StandardCharsets.UTF_8));
@@ -102,8 +100,8 @@ public class AudioFileController {
 //                headers.setContentDispositionFormData("attachment", encodedFileName);
 
 
-                return new ResponseEntity<>(audioFile.getData(), headers, HttpStatus.OK);
-            }
+            return new ResponseEntity<>(audioFile.getData(), headers, HttpStatus.OK);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -111,7 +109,7 @@ public class AudioFileController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    ////    @Cacheable("audioImages")
+    //    @Cacheable("audioImages")
     @GetMapping("/audio/{id}/image")
     public ResponseEntity<byte[]> getAudioImage(@PathVariable UUID id) {
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
@@ -119,28 +117,26 @@ public class AudioFileController {
         TransactionStatus status = transactionManager.getTransaction(def);
 
         try {
-            Optional<AudioFile> optionalAudioFile = Optional.ofNullable(audioFileService.getAudioFileById(id));
+            AudioFile audioFile = audioFileService.getAudioFileById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
-            if (optionalAudioFile.isPresent()) {
-                AudioFile audioFile = optionalAudioFile.get();
-                Optional<Image> optionalImageFile = Optional.ofNullable(audioFile.getImage());
+            Optional<Image> optionalImageFile = Optional.ofNullable(audioFile.getImage());
 
-                if (optionalImageFile.isPresent()) {
-                    Image image = optionalImageFile.get();
+            if (optionalImageFile.isPresent()) {
+                Image image = optionalImageFile.get();
 
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setContentType(MediaType.IMAGE_PNG);
-                    headers.setContentLength(image.getData().length);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.IMAGE_PNG);
+                headers.setContentLength(image.getData().length);
 
-                    String encodedFileName = Base64.getEncoder()
-                            .encodeToString(image.getFileName().getBytes(StandardCharsets.UTF_8));
+                String encodedFileName = Base64.getEncoder()
+                        .encodeToString(image.getFileName().getBytes(StandardCharsets.UTF_8));
 
-                    headers.setContentDispositionFormData("attachment", encodedFileName);
+                headers.setContentDispositionFormData("attachment", encodedFileName);
 
-                    transactionManager.commit(status);
+                transactionManager.commit(status);
 
-                    return new ResponseEntity<>(image.getData(), headers, HttpStatus.OK);
-                }
+                return new ResponseEntity<>(image.getData(), headers, HttpStatus.OK);
             }
         } catch (Exception e) {
             transactionManager.rollback(status);

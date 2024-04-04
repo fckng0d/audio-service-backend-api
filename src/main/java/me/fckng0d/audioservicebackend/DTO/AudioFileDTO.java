@@ -13,7 +13,6 @@ public class AudioFileDTO {
     private String title;
     private String author;
     private Float duration;
-//    private byte[] data;
     private List<String> genres;
     private Image image;
 }
