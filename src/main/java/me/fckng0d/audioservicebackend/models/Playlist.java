@@ -40,6 +40,9 @@ public class Playlist {
     @OneToOne
     private Image image = null;
 
+    @Column(name = "order_index")
+    private Integer orderIndex;
+
     @ManyToMany
     @OrderColumn(name = "audio_order")
     private List<AudioFile> audioFiles = new ArrayList<>();

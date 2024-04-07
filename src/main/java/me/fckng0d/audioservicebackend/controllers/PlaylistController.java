@@ -2,6 +2,7 @@ package me.fckng0d.audioservicebackend.controllers;
 
 import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
+import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
 import me.fckng0d.audioservicebackend.models.AudioFile;
 import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
@@ -77,6 +78,7 @@ public class PlaylistController {
                             dto.setCountOfAudio(playlist.getCountOfAudio());
                             dto.setDuration(playlist.getDuration());
                             dto.setImage(playlist.getImage());
+                            dto.setOrderIndex(playlist.getOrderIndex());
                             return dto;
                         })
                         .collect(Collectors.toList());
@@ -187,6 +189,19 @@ public class PlaylistController {
             transactionManager.rollback(status);
             e.printStackTrace();
             return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/playlists/updateOrder")
+    public ResponseEntity<String> updatePlaylistsOrder(@RequestBody List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) {
+        try {
+            playlistService.updatePlaylistsOrder(updatedWithIndexes);
+//            while (!playlistService.hasQueuedThreads()) {
+//                Thread.sleep(1);
+//            }
+            return new ResponseEntity<>("Playlists order updated successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update playlists order", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

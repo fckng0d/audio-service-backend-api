@@ -1,5 +1,6 @@
 package me.fckng0d.audioservicebackend.services;
 
+import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
 import me.fckng0d.audioservicebackend.models.AudioFile;
 import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
@@ -7,8 +8,7 @@ import me.fckng0d.audioservicebackend.repositories.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositories.ImageRepository;
 import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Service
 public class PlaylistService {
@@ -25,7 +24,8 @@ public class PlaylistService {
     private final PlaylistRepository playlistRepository;
     private final ImageRepository imageRepository;
 
-    private final Semaphore semaphore = new Semaphore(1);
+    private final Semaphore audioFilesSemaphore = new Semaphore(1);
+    private final Semaphore playlistsSemaphore = new Semaphore(1);
     private final AtomicInteger countOfRequests = new AtomicInteger(0);
 
 
@@ -37,7 +37,7 @@ public class PlaylistService {
     }
 
     public List<Playlist> getAllPlaylists() {
-        return playlistRepository.findAll();
+        return playlistRepository.findAll(Sort.by("orderIndex"));
     }
 
     //    @Transactional
@@ -53,6 +53,8 @@ public class PlaylistService {
         playlist.setAuthor(author);
         playlist.setDuration(0f);
         playlist.setCountOfAudio(0);
+
+        playlist.setOrderIndex((int) playlistRepository.count());
 
         if (imageFile != null) {
             Image image = new Image();
@@ -109,9 +111,31 @@ public class PlaylistService {
     }
 
     @Transactional
+    public void updatePlaylistsOrder(List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) throws InterruptedException {
+//        countOfRequests.incrementAndGet();
+        playlistsSemaphore.acquire();
+        try {
+            List<Playlist> oldPlaylists = playlistRepository.findAll();
+
+            oldPlaylists.forEach(oldPlaylist -> {
+                UpdatedPlaylistOrderIndexesDto updatedPlaylist = updatedWithIndexes.stream()
+                        .filter(playlist -> playlist.getId().equals(oldPlaylist.getId()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+
+                oldPlaylist.setOrderIndex(updatedPlaylist.getOrderIndex());
+                playlistRepository.save(oldPlaylist);
+            });
+        } finally {
+//            countOfRequests.decrementAndGet();
+            playlistsSemaphore.release();
+        }
+    }
+
+    @Transactional
     public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) throws InterruptedException {
         countOfRequests.incrementAndGet();
-        semaphore.acquire();
+        audioFilesSemaphore.acquire();
         try {
             Playlist existingPlaylist = playlistRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException());
@@ -135,7 +159,7 @@ public class PlaylistService {
             playlistRepository.save(existingPlaylist);
         } finally {
             countOfRequests.decrementAndGet();
-            semaphore.release();
+            audioFilesSemaphore.release();
         }
     }
 
@@ -146,7 +170,7 @@ public class PlaylistService {
     @Transactional
     public void deleteAudioFile(UUID playlistId, UUID audioFileId) throws InterruptedException {
         countOfRequests.incrementAndGet();
-        semaphore.acquire();
+        audioFilesSemaphore.acquire();
         try {
             Playlist existingPlaylist = playlistRepository.findById(playlistId)
                     .orElseThrow(() -> new RuntimeException("Playlist not found"));
@@ -171,7 +195,7 @@ public class PlaylistService {
             audioFileRepository.save(existingAudioFile);
         } finally {
             countOfRequests.decrementAndGet();
-            semaphore.release();
+            audioFilesSemaphore.release();
         }
     }
 }
