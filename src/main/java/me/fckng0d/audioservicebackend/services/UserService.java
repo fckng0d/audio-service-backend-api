@@ -54,6 +54,17 @@ public class UserService {
     }
 
     /**
+     * Получение пользователя по email
+     *
+     * @return пользователь
+     */
+    public User getByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+
+    }
+
+    /**
      * Получение пользователя по имени пользователя
      * <p>
      * Нужен для Spring Security

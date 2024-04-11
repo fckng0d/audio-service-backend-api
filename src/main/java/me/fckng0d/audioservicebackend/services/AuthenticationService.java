@@ -8,6 +8,7 @@ import me.fckng0d.audioservicebackend.models.Role;
 import me.fckng0d.audioservicebackend.models.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,15 +30,17 @@ public class AuthenticationService {
 
         var user = User.builder()
                 .username(request.getUsername())
-//                .email(request.getEmail())
-//                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.ROLE_USER)
                 .build();
 
         userService.create(user);
 
+        user.setEmail(null);
+        user.setPassword(null);
         var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt);
+        return new JwtAuthenticationResponse(jwt, user.getRole().toString());
     }
 
     /**
@@ -47,16 +50,32 @@ public class AuthenticationService {
      * @return токен
      */
     public JwtAuthenticationResponse signIn(SignInRequest request) {
+        String role = "";
+        String identifier = request.getIdentifier();
+
+        try {
+            User existingUser = userService.getByUsername(identifier);
+            role = existingUser.getRole().toString();
+        } catch (UsernameNotFoundException ignored) {
+        }
+
+        try {
+            User existingUser = userService.getByEmail(identifier);
+            identifier = existingUser.getUsername();
+            role = existingUser.getRole().toString();
+        } catch (UsernameNotFoundException ignored) {
+        }
+
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                request.getUsername(),
+                identifier,
                 request.getPassword()
         ));
 
         var user = userService
                 .userDetailsService()
-                .loadUserByUsername(request.getUsername());
+                .loadUserByUsername(identifier);
 
         var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt);
+        return new JwtAuthenticationResponse(jwt, role);
     }
 }
