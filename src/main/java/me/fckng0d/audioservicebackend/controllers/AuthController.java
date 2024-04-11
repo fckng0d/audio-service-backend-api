@@ -41,26 +41,28 @@ public class AuthController {
 
     @PostMapping("/validate-token")
     public ResponseEntity<?> validateToken(@RequestBody TokenValidationRequest request) {
-        String token = request.getToken();
-        System.out.println(token);
-        if (token == null) {
-            return ResponseEntity.badRequest().body("Token is invalid");
-        }
+        try{
+            String token = request.getToken();
+            System.out.println(token);
+            if (token == null) {
+                return ResponseEntity.badRequest().body("Token is invalid");
+            }
 
-        var username = jwtService.extractUserName(token);
-        UserDetails userDetails = userService
-                .userDetailsService()
-                .loadUserByUsername(username);
+            var username = jwtService.extractUserName(token);
+            UserDetails userDetails = userService
+                    .userDetailsService()
+                    .loadUserByUsername(username);
+            
+            boolean isValid = jwtService.isTokenValid(token, userDetails);
 
-        // Проверяем валидность токена
-        boolean isValid = jwtService.isTokenValid(token, userDetails);
-
-        // Возвращаем ответ
-        if (isValid) {
-            System.out.println("Token is valid");
-            return ResponseEntity.ok("Token is valid");
-        } else {
-            return ResponseEntity.badRequest().body("Token is invalid");
+            if (isValid) {
+                System.out.println("Token is valid");
+                return ResponseEntity.ok("Token is valid");
+            } else {
+                return ResponseEntity.badRequest().body("Token is invalid");
+            }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            return ResponseEntity.badRequest().body("Token is expired");
         }
     }
 }
