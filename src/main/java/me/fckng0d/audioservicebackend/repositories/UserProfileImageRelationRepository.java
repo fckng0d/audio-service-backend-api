@@ -1,6 +1,7 @@
 package me.fckng0d.audioservicebackend.repositories;
 
 import me.fckng0d.audioservicebackend.models.User;
+import me.fckng0d.audioservicebackend.models.UserProfileImageRelation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -8,9 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
-    boolean existsByUsername(String username);
-    boolean existsByEmail(String email);
+public interface UserProfileImageRelationRepository extends JpaRepository<UserProfileImageRelation, UUID> {
+    Optional<UserProfileImageRelation> findByUser(User user);
 }

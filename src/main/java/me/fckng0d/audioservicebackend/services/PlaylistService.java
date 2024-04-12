@@ -182,11 +182,11 @@ public class PlaylistService {
                 throw new IllegalArgumentException("AudioFile is not in the playlist");
             }
 
-            System.out.println(existingAudioFile.getId());
+//            System.out.println(existingAudioFile.getId());
 
             existingPlaylist.getAudioFiles().remove(existingAudioFile);
 
-            System.out.println("количество в списке: " + existingPlaylist.getAudioFiles().size());
+//            System.out.println("количество в списке: " + existingPlaylist.getAudioFiles().size());
 
             existingPlaylist.setCountOfAudio(existingPlaylist.getCountOfAudio() - 1);
             existingPlaylist.setDuration(existingPlaylist.getDuration() - existingAudioFile.getDuration());

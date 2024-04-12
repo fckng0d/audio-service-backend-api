@@ -4,15 +4,10 @@ import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
 import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
 import me.fckng0d.audioservicebackend.models.AudioFile;
-import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
-import me.fckng0d.audioservicebackend.repositories.ImageRepository;
 import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
-import me.fckng0d.audioservicebackend.services.AudioFileService;
 import me.fckng0d.audioservicebackend.services.PlaylistService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -23,7 +18,6 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,10 +39,11 @@ public class PlaylistController {
     }
 
     @GetMapping("/playlists")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<PlaylistDTO>> getAllPlaylists() {
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        TransactionStatus status = transactionManager.getTransaction(def);
+//        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+//        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+//        TransactionStatus status = transactionManager.getTransaction(def);
 
         try {
 
@@ -65,7 +60,7 @@ public class PlaylistController {
             List<Playlist> playlists = playlistService.getAllPlaylists();
 //            System.out.println(playlists.size());
 
-            transactionManager.commit(status);
+//            transactionManager.commit(status);
 
             if (!playlists.isEmpty()) {
 
@@ -91,7 +86,7 @@ public class PlaylistController {
             }
 
         } catch (Exception e) {
-            transactionManager.rollback(status);
+//            transactionManager.rollback(status);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

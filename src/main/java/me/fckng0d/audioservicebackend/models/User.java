@@ -5,12 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -22,9 +24,9 @@ public class User implements UserDetails {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    @UuidGenerator
-//    private UUID id;
-    private Long id;
+    @UuidGenerator
+    private UUID id;
+//    private Long id;
 
     @Column(name = "username", unique = true, nullable = false)
     private String username;
@@ -39,9 +41,10 @@ public class User implements UserDetails {
     @Column(name = "role", nullable = false)
     private Role role;
 
+//    @Column(name = "profile_image")
 //    @OneToOne
-//    @Column(name = "profile_image", nullable = true)
-//    private Image image = null;
+//    @JoinColumn(name = "image_id")
+//    private Image profileImage = null;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

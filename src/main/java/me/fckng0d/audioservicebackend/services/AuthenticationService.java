@@ -33,6 +33,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.ROLE_USER)
+//                .profileImage(null)
                 .build();
 
         userService.create(user);

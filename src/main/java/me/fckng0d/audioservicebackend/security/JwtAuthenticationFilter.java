@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String HEADER_NAME = "Authorization";
     private final JwtService jwtService;
     private final UserService userService;
+    private final PlatformTransactionManager transactionManager;
 
     @Override
     protected void doFilterInternal(
@@ -33,6 +35,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+//        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+//        definition.setName("MyCustomTransaction");
+//        definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+//
+//        TransactionStatus transaction = transactionManager.getTransaction(definition);
 
         // Получаем токен из заголовка
         var authHeader = request.getHeader(HEADER_NAME);
@@ -45,26 +52,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var jwt = authHeader.substring(BEARER_PREFIX.length());
         var username = jwtService.extractUserName(jwt);
 
-        if (StringUtils.isNotEmpty(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userService
-                    .userDetailsService()
-                    .loadUserByUsername(username);
+        try {
+            if (StringUtils.isNotEmpty(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userService
+                        .userDetailsService()
+                        .loadUserByUsername(username);
 
-            // Если токен валиден, то аутентифицируем пользователя
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
+                // Если токен валиден, то аутентифицируем пользователя
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    SecurityContext context = SecurityContextHolder.createEmptyContext();
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                context.setAuthentication(authToken);
-                SecurityContextHolder.setContext(context);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    context.setAuthentication(authToken);
+                    SecurityContextHolder.setContext(context);
+                }
+
             }
+//            transactionManager.commit(transaction);
+        } catch (Exception e) {
+//            transactionManager.rollback(transaction);
+            throw e;
         }
+
         filterChain.doFilter(request, response);
     }
 }

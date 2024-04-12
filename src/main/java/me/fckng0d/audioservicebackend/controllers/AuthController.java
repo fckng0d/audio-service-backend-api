@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth/")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 //@Tag(name = "Аутентификация")
 public class AuthController {
@@ -52,7 +52,7 @@ public class AuthController {
             UserDetails userDetails = userService
                     .userDetailsService()
                     .loadUserByUsername(username);
-            
+
             boolean isValid = jwtService.isTokenValid(token, userDetails);
 
             if (isValid) {
