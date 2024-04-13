@@ -1,6 +1,7 @@
 package me.fckng0d.audioservicebackend.services;
 
 import lombok.RequiredArgsConstructor;
+import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
 import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Role;
 import me.fckng0d.audioservicebackend.models.User;
@@ -85,6 +86,21 @@ public class UserService {
                 .getProfileImage();
 
         return profileImage;
+
+    }
+
+    @Transactional
+    public UserProfileDTO getProfileDataByUsername(String username) {
+        User user = repository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+
+        UserProfileDTO userProfileDTO = UserProfileDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .build();
+
+        return userProfileDTO;
 
     }
 
