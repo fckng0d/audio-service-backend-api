@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -23,17 +24,20 @@ public class PlaylistService {
     private final AudioFileRepository audioFileRepository;
     private final PlaylistRepository playlistRepository;
     private final ImageRepository imageRepository;
+    private final ImageService imageService;
 
-    private final Semaphore audioFilesSemaphore = new Semaphore(1);
+    private final Map<UUID, Semaphore> audioFilesSemaphores = new ConcurrentHashMap<>();
+    //    private final Semaphore audioFilesSemaphore = new Semaphore(1);
     private final Semaphore playlistsSemaphore = new Semaphore(1);
     private final AtomicInteger countOfRequests = new AtomicInteger(0);
 
 
     @Autowired
-    public PlaylistService(AudioFileRepository audioFileRepository, PlaylistRepository playlistRepository, ImageRepository imageRepository) {
+    public PlaylistService(AudioFileRepository audioFileRepository, PlaylistRepository playlistRepository, ImageRepository imageRepository, ImageService imageService) {
         this.audioFileRepository = audioFileRepository;
         this.playlistRepository = playlistRepository;
         this.imageRepository = imageRepository;
+        this.imageService = imageService;
     }
 
     public List<Playlist> getAllPlaylists() {
@@ -111,6 +115,34 @@ public class PlaylistService {
     }
 
     @Transactional
+    public Image updatePlaylisImage(UUID playlistId, MultipartFile playlistImage) {
+        Optional<Playlist> playlistOptional = playlistRepository.getPlaylistsById(playlistId);
+
+        if (playlistOptional.isPresent()) {
+            Playlist playlist = playlistOptional.get();
+
+            imageService.deleteImage(playlist.getImage());
+            Image newPlaylistImage = imageService.saveImage(playlistImage);
+            playlist.setImage(newPlaylistImage);
+            playlistRepository.save(playlist);
+            return newPlaylistImage;
+        }
+
+        return null;
+    }
+
+    @Transactional
+    public Image getPlaylistImage(UUID playlistId) {
+        Optional<Playlist> playlistOptional = playlistRepository.getPlaylistsById(playlistId);
+
+        if (playlistOptional.isPresent()) {
+            Playlist playlist = playlistOptional.get();
+            return playlist.getImage();
+        }
+        return null;
+    }
+
+    @Transactional
     public void updatePlaylistsOrder(List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) throws InterruptedException {
 //        countOfRequests.incrementAndGet();
         playlistsSemaphore.acquire();
@@ -135,13 +167,11 @@ public class PlaylistService {
     @Transactional
     public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) throws InterruptedException {
         countOfRequests.incrementAndGet();
+        Semaphore audioFilesSemaphore = audioFilesSemaphores.computeIfAbsent(id, k -> new Semaphore(1));
         audioFilesSemaphore.acquire();
         try {
             Playlist existingPlaylist = playlistRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException());
-
-//            existingPlaylist.getAudioFiles().clear();
-//            existingPlaylist.setAudioFiles(updatedAudioFiles);
 
             List<AudioFile> newAudioFiles = new ArrayList<>();
             for (AudioFile updatedAudioFile : updatedAudioFiles) {
@@ -160,6 +190,9 @@ public class PlaylistService {
         } finally {
             countOfRequests.decrementAndGet();
             audioFilesSemaphore.release();
+            if (audioFilesSemaphore.availablePermits() == 1) {
+                audioFilesSemaphores.remove(id);
+            }
         }
     }
 
@@ -170,6 +203,7 @@ public class PlaylistService {
     @Transactional
     public void deleteAudioFile(UUID playlistId, UUID audioFileId) throws InterruptedException {
         countOfRequests.incrementAndGet();
+        Semaphore audioFilesSemaphore = audioFilesSemaphores.computeIfAbsent(playlistId, k -> new Semaphore(1));
         audioFilesSemaphore.acquire();
         try {
             Playlist existingPlaylist = playlistRepository.findById(playlistId)
@@ -196,6 +230,9 @@ public class PlaylistService {
         } finally {
             countOfRequests.decrementAndGet();
             audioFilesSemaphore.release();
+            if (audioFilesSemaphore.availablePermits() == 1) {
+                audioFilesSemaphores.remove(playlistId);
+            }
         }
     }
 }

@@ -2,8 +2,10 @@ package me.fckng0d.audioservicebackend.controllers;
 
 import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
+import me.fckng0d.audioservicebackend.DTO.PlaylistImageDTO;
 import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
 import me.fckng0d.audioservicebackend.models.AudioFile;
+import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
 import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
 import me.fckng0d.audioservicebackend.services.PlaylistService;
@@ -157,9 +159,9 @@ public class PlaylistController {
         }
     }
 
-    @PostMapping("/playlists/{id}/upload")
+    @PostMapping("/playlists/{playlistId}/upload")
 //    @CacheEvict(cacheNames="playlist", key="#id")
-    public ResponseEntity<String> uploadAudioFile(@PathVariable UUID id,
+    public ResponseEntity<String> uploadAudioFile(@PathVariable UUID playlistId,
                                                   @RequestParam("title") String title,
                                                   @RequestParam("author") String author,
                                                   @RequestParam("audioFile") MultipartFile audioFile,
@@ -172,7 +174,7 @@ public class PlaylistController {
         TransactionStatus status = transactionManager.getTransaction(def);
 
         try {
-            Playlist playlist = playlistRepository.findById(id)
+            Playlist playlist = playlistRepository.findById(playlistId)
                     .orElseThrow(() -> new RuntimeException("Playlist not found"));
 
             playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
@@ -184,6 +186,28 @@ public class PlaylistController {
             transactionManager.rollback(status);
             e.printStackTrace();
             return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    @PutMapping("/playlists/{playlistId}/image/update")
+    public ResponseEntity<PlaylistImageDTO> uploadProfileImage(@PathVariable UUID playlistId,
+                                                    @RequestParam("playlistImage") MultipartFile playlistImage) {
+        try {
+            playlistService.updatePlaylisImage(playlistId, playlistImage);
+            Image newPlaylistImage = playlistService.getPlaylistImage(playlistId);
+            PlaylistImageDTO playlistImageDTO = PlaylistImageDTO.builder()
+                    .playlistImage(newPlaylistImage)
+                    .build();
+            if (newPlaylistImage != null) {
+                return new ResponseEntity<>(playlistImageDTO, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

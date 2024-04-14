@@ -44,7 +44,7 @@ public class UserController {
 
     @Transactional
     @PostMapping("/profile/image/upload")
-    public ResponseEntity<Image> uploadProfileImage(HttpServletRequest request,
+    public ResponseEntity<String> uploadProfileImage(HttpServletRequest request,
                                                      @RequestParam("profileImage") MultipartFile profileImage) {
         try {
             String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
@@ -52,8 +52,7 @@ public class UserController {
 
             if (username != null) {
                 userService.uploadUserProfileImage(username, profileImage);
-                Image newProfileImage = userService.getProfileImageByUsername(username);
-                return new ResponseEntity<>(newProfileImage, HttpStatus.OK);
+                return new ResponseEntity<>(HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
