@@ -13,12 +13,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository repository;
     private final UserProfileImageRelationRepository userProfileImageRelationRepository;
+    private final ImageService imageService;
 
     /**
      * Сохранение пользователя
@@ -77,19 +79,6 @@ public class UserService {
     }
 
     @Transactional
-    public Image getProfileImageByUsername(String username) {
-        User user = repository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
-
-        Image profileImage = userProfileImageRelationRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Фотография профиля не найдена"))
-                .getProfileImage();
-
-        return profileImage;
-
-    }
-
-    @Transactional
     public UserProfileDTO getProfileDataByUsername(String username) {
         User user = repository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
@@ -102,6 +91,66 @@ public class UserService {
 
         return userProfileDTO;
 
+    }
+
+    @Transactional
+    public Image getProfileImageByUsername(String username) {
+        User user = repository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+
+        UserProfileImageRelation userProfileImageRelation = userProfileImageRelationRepository.findByUser(user)
+                .orElseGet(() -> userProfileImageRelationRepository.save(
+                        UserProfileImageRelation.builder()
+                                .user(user)
+                                .profileImage(null)
+                                .build()
+                ));
+
+        return userProfileImageRelation.getProfileImage();
+    }
+
+    @Transactional
+    public Image uploadUserProfileImage(String username, MultipartFile imageFile) {
+        Image profileImage = this.getProfileImageByUsername(username);
+
+        UserProfileImageRelation userProfileImageRelation =
+                userProfileImageRelationRepository.findByProfileImage(profileImage)
+                        .orElseThrow(() -> new RuntimeException("UserProfileImageRelation not found"));
+
+        if (profileImage != null) {
+            imageService.deleteImage(profileImage);
+        }
+
+        profileImage = imageService.saveImage(imageFile);
+        userProfileImageRelation.setProfileImage(profileImage);
+
+        return userProfileImageRelationRepository.save(userProfileImageRelation).getProfileImage();
+    }
+
+    @Transactional
+    public void deleteProfileImage(String username) {
+        Image profileImage = this.getProfileImageByUsername(username);
+
+        if (profileImage == null) {
+            return;
+        }
+
+        UserProfileImageRelation userProfileImageRelation =
+                userProfileImageRelationRepository.findByProfileImage(profileImage)
+                        .orElseThrow(() -> new RuntimeException("UserProfileImageRelation not found"));
+
+        imageService.deleteImage(profileImage);
+
+        userProfileImageRelation.setProfileImage(null);
+
+//        UserProfileImageRelation newUserProfileImageRelation =
+//                UserProfileImageRelation.builder()
+//                .user(userProfileImageRelation.getUser())
+//                .profileImage(null)
+//                .build();
+//
+//        userProfileImageRelationRepository.delete(userProfileImageRelation);
+        userProfileImageRelationRepository.save(userProfileImageRelation);
     }
 
     /**
