@@ -5,20 +5,21 @@ import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
 import me.fckng0d.audioservicebackend.repositories.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositories.ImageRepository;
-import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 @Service
 public class AudioFileService {
     private final AudioFileRepository audioFileRepository;
     private final ImageRepository imageRepository;
+    private final Map<UUID, Semaphore> audioFileSemaphores = new ConcurrentHashMap<>();
 
     @Autowired
     public AudioFileService(AudioFileRepository audioFileRepository, ImageRepository imageRepository) {
@@ -84,5 +85,27 @@ public class AudioFileService {
             }
         }
         return audioFiles;
+    }
+
+    @Transactional
+    public void incrementCountOfAuditions(UUID id) throws InterruptedException {
+        Semaphore audioFileSemaphore = audioFileSemaphores.computeIfAbsent(id, k -> new Semaphore(1));
+        audioFileSemaphore.acquire();
+        try {
+
+            Optional<AudioFile> audioFileOptional = audioFileRepository.getAudioFileById(id);
+
+            if (audioFileOptional.isPresent()) {
+                AudioFile audioFile = audioFileOptional.get();
+
+                audioFile.setCountOfAuditions(audioFile.getCountOfAuditions() + 1);
+                audioFileRepository.save(audioFile);
+            }
+        } finally {
+            audioFileSemaphore.release();
+            if (audioFileSemaphore.availablePermits() == 1) {
+                audioFileSemaphores.remove(id);
+            }
+        }
     }
 }

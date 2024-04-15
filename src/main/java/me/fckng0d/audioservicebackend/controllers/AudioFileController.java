@@ -6,7 +6,6 @@ import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.services.AudioFileService;
 import me.fckng0d.audioservicebackend.services.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,7 +15,6 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -145,23 +143,33 @@ public class AudioFileController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("/")
-    public ResponseEntity<String> uploadAudioFile(@RequestParam("title") String title,
-                                                  @RequestParam("author") String author,
-                                                  @RequestParam("audioFile") MultipartFile audioFile,
-                                                  @RequestParam("imageFile") MultipartFile imageFile,
-                                                  @RequestParam("genres") List<String> genres,
-                                                  @RequestParam("duration") Float duration) {
+    @PutMapping("/audio/{id}/incrementCountOfAuditions")
+    public ResponseEntity<String> incrementCountOfAuditions(@PathVariable UUID id) {
 
         try {
-            audioFileService.saveAudioFile(audioFile, imageFile, title, author, genres, duration);
-
-            return new ResponseEntity<>("Audio file uploaded successfully", HttpStatus.OK);
+            audioFileService.incrementCountOfAuditions(id);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-
+//    @PostMapping("/")
+//    public ResponseEntity<String> uploadAudioFile(@RequestParam("title") String title,
+//                                                  @RequestParam("author") String author,
+//                                                  @RequestParam("audioFile") MultipartFile audioFile,
+//                                                  @RequestParam("imageFile") MultipartFile imageFile,
+//                                                  @RequestParam("genres") List<String> genres,
+//                                                  @RequestParam("duration") Float duration) {
+//
+//        try {
+//            audioFileService.saveAudioFile(audioFile, imageFile, title, author, genres, duration);
+//
+//            return new ResponseEntity<>("Audio file uploaded successfully", HttpStatus.OK);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 }

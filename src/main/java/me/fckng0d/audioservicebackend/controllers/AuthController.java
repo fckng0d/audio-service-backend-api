@@ -43,7 +43,6 @@ public class AuthController {
     public ResponseEntity<?> validateToken(@RequestBody TokenValidationRequest request) {
         try{
             String token = request.getToken();
-            System.out.println(token);
             if (token == null) {
                 return ResponseEntity.badRequest().body("Token is invalid");
             }
@@ -56,7 +55,6 @@ public class AuthController {
             boolean isValid = jwtService.isTokenValid(token, userDetails);
 
             if (isValid) {
-                System.out.println("Token is valid");
                 return ResponseEntity.ok("Token is valid");
             } else {
                 return ResponseEntity.badRequest().body("Token is invalid");

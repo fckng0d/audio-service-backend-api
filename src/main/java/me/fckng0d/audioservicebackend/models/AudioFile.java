@@ -44,6 +44,9 @@ public class AudioFile {
     @Column(name = "duration")
     private Float duration;
 
+    @Column(name = "count_of_auditions")
+    private Long countOfAuditions = 0L;
+
     @ElementCollection
 //    @NotNull
     private List<String> genres;

@@ -1,5 +1,6 @@
 package me.fckng0d.audioservicebackend.controllers;
 
+import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistImageDTO;
@@ -9,7 +10,6 @@ import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
 import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
 import me.fckng0d.audioservicebackend.services.PlaylistService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -27,18 +27,12 @@ import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "${cross-origin}", maxAge = 3600)
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class PlaylistController {
     private final PlaylistService playlistService;
     private final PlaylistRepository playlistRepository;
     private final PlatformTransactionManager transactionManager;
-
-    @Autowired
-    public PlaylistController(PlaylistService playlistService, PlaylistRepository playlistRepository, PlatformTransactionManager transactionManager) {
-        this.playlistService = playlistService;
-        this.playlistRepository = playlistRepository;
-        this.transactionManager = transactionManager;
-    }
 
     @GetMapping("/playlists")
     @Transactional(readOnly = true)
@@ -122,6 +116,7 @@ public class PlaylistController {
                             dto.setTitle(audioFile.getTitle());
                             dto.setAuthor(audioFile.getAuthor());
                             dto.setDuration(audioFile.getDuration());
+                            dto.setCountOfAuditions(audioFile.getCountOfAuditions());
                             dto.setGenres(audioFile.getGenres());
                             dto.setImage(audioFile.getImage());
                             return dto;
