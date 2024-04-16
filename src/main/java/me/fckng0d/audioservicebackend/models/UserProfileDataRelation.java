@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Table(name = "user_profile_image_relations")
-public class UserProfileImageRelation {
+public class UserProfileDataRelation {
     @Id
     @UuidGenerator
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,4 +28,7 @@ public class UserProfileImageRelation {
     @OneToOne
 //    @Column(name = "profile_image")
     private Image profileImage;
+
+    @OneToOne
+    private PlaylistContainer playlistContainer;
 }

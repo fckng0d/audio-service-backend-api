@@ -3,10 +3,10 @@ package me.fckng0d.audioservicebackend.services;
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
 import me.fckng0d.audioservicebackend.models.Image;
-import me.fckng0d.audioservicebackend.models.Role;
+import me.fckng0d.audioservicebackend.models.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.models.User;
-import me.fckng0d.audioservicebackend.models.UserProfileImageRelation;
-import me.fckng0d.audioservicebackend.repositories.UserProfileImageRelationRepository;
+import me.fckng0d.audioservicebackend.models.UserProfileDataRelation;
+import me.fckng0d.audioservicebackend.repositories.UserProfileDataRelationRepository;
 import me.fckng0d.audioservicebackend.repositories.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository repository;
-    private final UserProfileImageRelationRepository userProfileImageRelationRepository;
+    private final UserProfileDataRelationRepository userProfileDataRelationRepository;
     private final ImageService imageService;
 
     /**
@@ -47,11 +47,11 @@ public class UserService {
             throw new RuntimeException("Пользователь с таким email уже существует");
         }
 
-        var userProfileImageRelation = UserProfileImageRelation.builder()
+        var userProfileImageRelation = UserProfileDataRelation.builder()
                 .user(user)
                 .profileImage(null)
                 .build();
-        userProfileImageRelationRepository.save(userProfileImageRelation);
+        userProfileDataRelationRepository.save(userProfileImageRelation);
 
         return save(user);
     }
@@ -98,23 +98,23 @@ public class UserService {
         User user = repository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
-        UserProfileImageRelation userProfileImageRelation = userProfileImageRelationRepository.findByUser(user)
-                .orElseGet(() -> userProfileImageRelationRepository.save(
-                        UserProfileImageRelation.builder()
+        UserProfileDataRelation userProfileDataRelation = userProfileDataRelationRepository.findByUser(user)
+                .orElseGet(() -> userProfileDataRelationRepository.save(
+                        UserProfileDataRelation.builder()
                                 .user(user)
                                 .profileImage(null)
                                 .build()
                 ));
 
-        return userProfileImageRelation.getProfileImage();
+        return userProfileDataRelation.getProfileImage();
     }
 
     @Transactional
     public Image uploadUserProfileImage(String username, MultipartFile imageFile) {
         Image profileImage = this.getProfileImageByUsername(username);
 
-        UserProfileImageRelation userProfileImageRelation =
-                userProfileImageRelationRepository.findByProfileImage(profileImage)
+        UserProfileDataRelation userProfileDataRelation =
+                userProfileDataRelationRepository.findByProfileImage(profileImage)
                         .orElseThrow(() -> new RuntimeException("UserProfileImageRelation not found"));
 
         if (profileImage != null) {
@@ -122,9 +122,9 @@ public class UserService {
         }
 
         profileImage = imageService.saveImage(imageFile);
-        userProfileImageRelation.setProfileImage(profileImage);
+        userProfileDataRelation.setProfileImage(profileImage);
 
-        return userProfileImageRelationRepository.save(userProfileImageRelation).getProfileImage();
+        return userProfileDataRelationRepository.save(userProfileDataRelation).getProfileImage();
     }
 
     @Transactional
@@ -135,13 +135,13 @@ public class UserService {
             return;
         }
 
-        UserProfileImageRelation userProfileImageRelation =
-                userProfileImageRelationRepository.findByProfileImage(profileImage)
+        UserProfileDataRelation userProfileDataRelation =
+                userProfileDataRelationRepository.findByProfileImage(profileImage)
                         .orElseThrow(() -> new RuntimeException("UserProfileImageRelation not found"));
 
         imageService.deleteImage(profileImage);
 
-        userProfileImageRelation.setProfileImage(null);
+        userProfileDataRelation.setProfileImage(null);
 
 //        UserProfileImageRelation newUserProfileImageRelation =
 //                UserProfileImageRelation.builder()
@@ -150,7 +150,7 @@ public class UserService {
 //                .build();
 //
 //        userProfileImageRelationRepository.delete(userProfileImageRelation);
-        userProfileImageRelationRepository.save(userProfileImageRelation);
+        userProfileDataRelationRepository.save(userProfileDataRelation);
     }
 
     /**
@@ -184,7 +184,7 @@ public class UserService {
     @Deprecated
     public void getAdmin() {
         var user = getCurrentUser();
-        user.setRole(Role.ROLE_ADMIN);
+        user.setUserRoleEnum(UserRoleEnum.ROLE_ADMIN);
         save(user);
     }
 }

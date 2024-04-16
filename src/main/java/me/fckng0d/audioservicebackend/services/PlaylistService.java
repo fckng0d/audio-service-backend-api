@@ -1,13 +1,13 @@
 package me.fckng0d.audioservicebackend.services;
 
-import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
+import lombok.RequiredArgsConstructor;
+import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
 import me.fckng0d.audioservicebackend.models.AudioFile;
 import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
 import me.fckng0d.audioservicebackend.repositories.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositories.ImageRepository;
 import me.fckng0d.audioservicebackend.repositories.PlaylistRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +20,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
+@RequiredArgsConstructor
 public class PlaylistService {
     private final AudioFileRepository audioFileRepository;
     private final PlaylistRepository playlistRepository;
@@ -30,15 +31,6 @@ public class PlaylistService {
     //    private final Semaphore audioFilesSemaphore = new Semaphore(1);
     private final Semaphore playlistsSemaphore = new Semaphore(1);
     private final AtomicInteger countOfRequests = new AtomicInteger(0);
-
-
-    @Autowired
-    public PlaylistService(AudioFileRepository audioFileRepository, PlaylistRepository playlistRepository, ImageRepository imageRepository, ImageService imageService) {
-        this.audioFileRepository = audioFileRepository;
-        this.playlistRepository = playlistRepository;
-        this.imageRepository = imageRepository;
-        this.imageService = imageService;
-    }
 
     public List<Playlist> getAllPlaylists() {
         return playlistRepository.findAll(Sort.by("orderIndex"));
@@ -51,7 +43,30 @@ public class PlaylistService {
         return playlistRepository.getPlaylistsById(id);
     }
 
-    public void createNewPlaylist(String name, String author, MultipartFile imageFile) {
+
+    public PlaylistDTO convertToDTO(Playlist playlist) {
+        PlaylistDTO dto = new PlaylistDTO();
+        dto.setId(playlist.getId());
+        dto.setName(playlist.getName());
+        dto.setAuthor(playlist.getAuthor());
+        dto.setCountOfAudio(playlist.getCountOfAudio());
+        dto.setDuration(playlist.getDuration());
+        dto.setImage(playlist.getImage());
+        dto.setOrderIndex(playlist.getOrderIndex());
+
+        return dto;
+    }
+
+    public List<PlaylistDTO> convertListToDTOs(List<Playlist> playlists) {
+        List<PlaylistDTO> playlistDTOS = playlists.stream()
+                .map(this::convertToDTO)
+                .toList();
+
+        return playlistDTOS;
+    }
+
+
+    public Playlist createNewPlaylist(String name, String author, MultipartFile imageFile) {
         Playlist playlist = new Playlist();
         playlist.setName(name);
         playlist.setAuthor(author);
@@ -71,8 +86,10 @@ public class PlaylistService {
 
             imageRepository.save(image);
             playlist.setImage(image);
-            playlistRepository.save(playlist);
+            return playlistRepository.save(playlist);
         }
+
+        return null;
     }
 
 
@@ -108,7 +125,6 @@ public class PlaylistService {
         playlist.setDuration(playlist.getDuration() + duration);
 
         audio.getPlaylists().add(playlist);
-
         audioFileRepository.save(audio);
         playlist.getAudioFiles().add(audio);
         playlistRepository.save(playlist);
@@ -143,30 +159,7 @@ public class PlaylistService {
     }
 
     @Transactional
-    public void updatePlaylistsOrder(List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) throws InterruptedException {
-//        countOfRequests.incrementAndGet();
-        playlistsSemaphore.acquire();
-        try {
-            List<Playlist> oldPlaylists = playlistRepository.findAll();
-
-            oldPlaylists.forEach(oldPlaylist -> {
-                UpdatedPlaylistOrderIndexesDto updatedPlaylist = updatedWithIndexes.stream()
-                        .filter(playlist -> playlist.getId().equals(oldPlaylist.getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
-
-                oldPlaylist.setOrderIndex(updatedPlaylist.getOrderIndex());
-                playlistRepository.save(oldPlaylist);
-            });
-        } finally {
-//            countOfRequests.decrementAndGet();
-            playlistsSemaphore.release();
-        }
-    }
-
-    @Transactional
     public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) throws InterruptedException {
-        countOfRequests.incrementAndGet();
         Semaphore audioFilesSemaphore = audioFilesSemaphores.computeIfAbsent(id, k -> new Semaphore(1));
         audioFilesSemaphore.acquire();
         try {
@@ -188,7 +181,6 @@ public class PlaylistService {
 
             playlistRepository.save(existingPlaylist);
         } finally {
-            countOfRequests.decrementAndGet();
             audioFilesSemaphore.release();
             if (audioFilesSemaphore.availablePermits() == 1) {
                 audioFilesSemaphores.remove(id);
@@ -196,13 +188,8 @@ public class PlaylistService {
         }
     }
 
-    public boolean hasQueuedThreads() {
-        return countOfRequests.get() == 0;
-    }
-
     @Transactional
     public void deleteAudioFile(UUID playlistId, UUID audioFileId) throws InterruptedException {
-        countOfRequests.incrementAndGet();
         Semaphore audioFilesSemaphore = audioFilesSemaphores.computeIfAbsent(playlistId, k -> new Semaphore(1));
         audioFilesSemaphore.acquire();
         try {
@@ -228,7 +215,6 @@ public class PlaylistService {
             existingAudioFile.getPlaylists().remove(existingPlaylist);
             audioFileRepository.save(existingAudioFile);
         } finally {
-            countOfRequests.decrementAndGet();
             audioFilesSemaphore.release();
             if (audioFilesSemaphore.availablePermits() == 1) {
                 audioFilesSemaphores.remove(playlistId);

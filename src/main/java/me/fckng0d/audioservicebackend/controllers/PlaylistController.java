@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
 import me.fckng0d.audioservicebackend.DTO.PlaylistImageDTO;
-import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
 import me.fckng0d.audioservicebackend.models.AudioFile;
 import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.Playlist;
@@ -60,19 +59,7 @@ public class PlaylistController {
 
             if (!playlists.isEmpty()) {
 
-                List<PlaylistDTO> playlistDTOS = playlists.stream()
-                        .map(playlist -> {
-                            PlaylistDTO dto = new PlaylistDTO();
-                            dto.setId(playlist.getId());
-                            dto.setName(playlist.getName());
-                            dto.setAuthor(playlist.getAuthor());
-                            dto.setCountOfAudio(playlist.getCountOfAudio());
-                            dto.setDuration(playlist.getDuration());
-                            dto.setImage(playlist.getImage());
-                            dto.setOrderIndex(playlist.getOrderIndex());
-                            return dto;
-                        })
-                        .collect(Collectors.toList());
+                List<PlaylistDTO> playlistDTOS = playlistService.convertListToDTOs(playlists);
 
                 return new ResponseEntity<>(playlistDTOS, HttpStatus.OK);
 
@@ -147,10 +134,10 @@ public class PlaylistController {
         try {
             playlistService.createNewPlaylist(name, author, imageFile);
 
-            return new ResponseEntity<>("Playlist added successfully", HttpStatus.OK);
+            return new ResponseEntity<>("Playlist created successfully", HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>("Failed to add playlist", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Failed to create playlist", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -187,7 +174,7 @@ public class PlaylistController {
     @Transactional
     @PutMapping("/playlists/{playlistId}/image/update")
     public ResponseEntity<PlaylistImageDTO> uploadProfileImage(@PathVariable UUID playlistId,
-                                                    @RequestParam("playlistImage") MultipartFile playlistImage) {
+                                                               @RequestParam("playlistImage") MultipartFile playlistImage) {
         try {
             playlistService.updatePlaylisImage(playlistId, playlistImage);
             Image newPlaylistImage = playlistService.getPlaylistImage(playlistId);
@@ -206,18 +193,18 @@ public class PlaylistController {
         }
     }
 
-    @PutMapping("/playlists/updateOrder")
-    public ResponseEntity<String> updatePlaylistsOrder(@RequestBody List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) {
-        try {
-            playlistService.updatePlaylistsOrder(updatedWithIndexes);
-//            while (!playlistService.hasQueuedThreads()) {
-//                Thread.sleep(1);
-//            }
-            return new ResponseEntity<>("Playlists order updated successfully", HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to update playlists order", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @PutMapping("/playlists/updateOrder")
+//    public ResponseEntity<String> updatePlaylistsOrder(@RequestBody List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) {
+//        try {
+//            playlistService.updatePlaylistsOrder(updatedWithIndexes);
+////            while (!playlistService.hasQueuedThreads()) {
+////                Thread.sleep(1);
+////            }
+//            return new ResponseEntity<>("Playlists order updated successfully", HttpStatus.OK);
+//        } catch (Exception e) {
+//            return new ResponseEntity<>("Failed to update playlists order", HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @PutMapping("/playlists/{id}/update")
     public ResponseEntity<String> updatePlaylist(@PathVariable UUID id, @RequestBody List<AudioFile> updatedAudioFiles) {

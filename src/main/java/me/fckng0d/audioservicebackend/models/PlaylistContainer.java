@@ -1,10 +1,12 @@
 package me.fckng0d.audioservicebackend.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import me.fckng0d.audioservicebackend.models.enums.PlayListOwnerEnum;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.ArrayList;
@@ -15,7 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Playlist {
+public class PlaylistContainer {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,26 +28,21 @@ public class Playlist {
     @NotBlank
     private String name;
 
-    @Column(name = "author")
+    @Column(name = "description")
     @NotBlank
-    private String author;
+    private String description;
 
-    @Column(name = "count_of_audio")
-    private Integer countOfAudio;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "playlist_owner", nullable = false)
+    private PlayListOwnerEnum playlistOwner;
 
-    @Column(name = "duration")
-    private Float duration;
-
-    @OneToOne
-    private Image image = null;
-
-    @Column(name = "order_index")
-    private Integer orderIndex;
+    @Column(name = "count_of_playlists")
+    @Max(value = 30)
+    private Integer countOfPlaylists = 0;
 
     @ManyToMany
-    @OrderColumn(name = "audio_order")
-    private List<AudioFile> audioFiles = new ArrayList<>();
-
-    @ManyToMany(mappedBy = "playlists")
-    private List<PlaylistContainer> PlaylistContainers = new ArrayList<>();
+    @OrderColumn(name = "playlist_order")
+    private List<Playlist> playlists = new ArrayList<>();
 }
+
+

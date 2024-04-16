@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
-import me.fckng0d.audioservicebackend.models.Role;
+import me.fckng0d.audioservicebackend.models.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.models.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,7 +32,7 @@ public class AuthenticationService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.ROLE_USER)
+                .userRoleEnum(UserRoleEnum.ROLE_USER)
 //                .profileImage(null)
                 .build();
 
@@ -41,7 +41,7 @@ public class AuthenticationService {
         user.setEmail(null);
         user.setPassword(null);
         var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt, user.getRole().toString());
+        return new JwtAuthenticationResponse(jwt, user.getUserRoleEnum().toString());
     }
 
     /**
@@ -56,14 +56,14 @@ public class AuthenticationService {
 
         try {
             User existingUser = userService.getByUsername(identifier);
-            role = existingUser.getRole().toString();
+            role = existingUser.getUserRoleEnum().toString();
         } catch (UsernameNotFoundException ignored) {
         }
 
         try {
             User existingUser = userService.getByEmail(identifier);
             identifier = existingUser.getUsername();
-            role = existingUser.getRole().toString();
+            role = existingUser.getUserRoleEnum().toString();
         } catch (UsernameNotFoundException ignored) {
         }
 
