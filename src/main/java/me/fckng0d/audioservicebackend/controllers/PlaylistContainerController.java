@@ -5,7 +5,6 @@ import me.fckng0d.audioservicebackend.DTO.PlaylistContainerDTO;
 import me.fckng0d.audioservicebackend.DTO.UpdatedPlaylistOrderIndexesDto;
 import me.fckng0d.audioservicebackend.models.Playlist;
 import me.fckng0d.audioservicebackend.models.PlaylistContainer;
-import me.fckng0d.audioservicebackend.models.enums.PlayListOwnerEnum;
 import me.fckng0d.audioservicebackend.services.PlaylistContainerService;
 import me.fckng0d.audioservicebackend.services.PlaylistService;
 import org.springframework.http.HttpStatus;
@@ -60,20 +59,21 @@ public class PlaylistContainerController {
                     );
 
             PlaylistContainerDTO playlistContainerDTO = playlistContainerService.convertToDTO(playlistContainer);
-
                 return new ResponseEntity<>(playlistContainerDTO, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PostMapping("/playlistContainers/create")
-    public ResponseEntity<String> createPlaylistContainers(@RequestParam("name") String name,
-                                                           @RequestParam("description") String description,
-                                                           @RequestParam("playlistOwner") PlayListOwnerEnum playlistOwner) {
+    @PostMapping("/public/playlistContainers/create")
+    @Transactional
+    public ResponseEntity<String> createPlaylistContainers(@RequestParam("name") String name
+//                                                           ,@RequestParam("description") String description,
+//                                                           @RequestParam("playlistOwner") PlayListOwnerEnum playlistOwner
+    ) {
 
         try {
-            playlistContainerService.createNewPlaylistContainer(name, description, playlistOwner);
+            playlistContainerService.createNewPublicPlaylistContainer(name);
 
             return new ResponseEntity<>("Playlist container created successfully", HttpStatus.OK);
         } catch (Exception e) {

@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserRepository repository;
+    private final UserRepository userRepository;
     private final UserProfileDataRelationRepository userProfileDataRelationRepository;
     private final ImageService imageService;
 
@@ -28,7 +28,7 @@ public class UserService {
      * @return сохраненный пользователь
      */
     public User save(User user) {
-        return repository.save(user);
+        return userRepository.save(user);
     }
 
 
@@ -38,12 +38,12 @@ public class UserService {
      * @return созданный пользователь
      */
     public User create(User user) {
-        if (repository.existsByUsername(user.getUsername())) {
+        if (userRepository.existsByUsername(user.getUsername())) {
             // Заменить на свои исключения
             throw new RuntimeException("Пользователь с таким именем уже существует");
         }
 
-        if (repository.existsByEmail(user.getEmail())) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Пользователь с таким email уже существует");
         }
 
@@ -62,7 +62,7 @@ public class UserService {
      * @return пользователь
      */
     public User getByUsername(String username) {
-        return repository.findByUsername(username)
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
     }
@@ -73,20 +73,22 @@ public class UserService {
      * @return пользователь
      */
     public User getByEmail(String email) {
-        return repository.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
     }
 
     @Transactional
     public UserProfileDTO getProfileDataByUsername(String username) {
-        User user = repository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        User user = this.getByUsername(username);
+
+        Image profileImage = this.getProfileImageByUser(user);
 
         UserProfileDTO userProfileDTO = UserProfileDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .profileImage(profileImage)
                 .build();
 
         return userProfileDTO;
@@ -94,10 +96,7 @@ public class UserService {
     }
 
     @Transactional
-    public Image getProfileImageByUsername(String username) {
-        User user = repository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
-
+    public Image getProfileImageByUser(User user) {
         UserProfileDataRelation userProfileDataRelation = userProfileDataRelationRepository.findByUser(user)
                 .orElseGet(() -> userProfileDataRelationRepository.save(
                         UserProfileDataRelation.builder()
@@ -107,6 +106,13 @@ public class UserService {
                 ));
 
         return userProfileDataRelation.getProfileImage();
+    }
+
+    @Transactional
+    public Image getProfileImageByUsername(String username) {
+        User user = this.getByUsername(username);
+
+        return this.getProfileImageByUser(user);
     }
 
     @Transactional

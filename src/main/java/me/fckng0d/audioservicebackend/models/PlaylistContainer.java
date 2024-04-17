@@ -28,8 +28,9 @@ public class PlaylistContainer {
     @NotBlank
     private String name;
 
+    // не нужно
     @Column(name = "description")
-    @NotBlank
+//    @NotBlank
     private String description;
 
     @Enumerated(EnumType.STRING)

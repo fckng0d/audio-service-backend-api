@@ -52,11 +52,14 @@ public class PlaylistContainerService {
         return playlistContainerRepository.getPlaylistContainerById(id);
     }
 
-    public void createNewPlaylistContainer(String name, String description, PlayListOwnerEnum playlistOwner) {
+    @Transactional
+    public void createNewPublicPlaylistContainer(String name
+//                                           ,String description, PlayListOwnerEnum playlistOwner
+    ) {
         PlaylistContainer playlistContainer = new PlaylistContainer();
         playlistContainer.setName(name);
-        playlistContainer.setDescription(description);
-        playlistContainer.setPlaylistOwner(playlistOwner);
+        playlistContainer.setDescription("");
+        playlistContainer.setPlaylistOwner(PlayListOwnerEnum.PUBLIC);
 
         playlistContainerRepository.save(playlistContainer);
     }

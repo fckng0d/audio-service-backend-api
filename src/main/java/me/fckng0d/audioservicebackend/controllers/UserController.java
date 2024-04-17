@@ -3,7 +3,6 @@ package me.fckng0d.audioservicebackend.controllers;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
-import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.services.ImageService;
 import me.fckng0d.audioservicebackend.services.JwtService;
 import me.fckng0d.audioservicebackend.services.UserService;
@@ -22,16 +21,16 @@ public class UserController {
     private final ImageService imageService;
     private final JwtService jwtService;
 
-    @GetMapping("/profile/image")
+    @GetMapping("/profile")
     @Transactional(readOnly = true)
-    public ResponseEntity<Image> getProfileImage(HttpServletRequest request) {
+    public ResponseEntity<UserProfileDTO> getProfileData(HttpServletRequest request) {
         try {
             String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
             String username = jwtService.extractUserName(token);
 
             if (username != null) {
-                Image profileImage = userService.getProfileImageByUsername(username);
-                return new ResponseEntity<>(profileImage, HttpStatus.OK);
+                UserProfileDTO userProfileDTO = userService.getProfileDataByUsername(username);
+                return new ResponseEntity<>(userProfileDTO, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
@@ -41,6 +40,26 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+//    @GetMapping("/profile/image")
+//    @Transactional(readOnly = true)
+//    public ResponseEntity<Image> getProfileImage(HttpServletRequest request) {
+//        try {
+//            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
+//            String username = jwtService.extractUserName(token);
+//
+//            if (username != null) {
+//                Image profileImage = userService.getProfileImageByUsername(username);
+//                return new ResponseEntity<>(profileImage, HttpStatus.OK);
+//            } else {
+//                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//            }
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @Transactional
     @PostMapping("/profile/image/upload")
@@ -73,29 +92,6 @@ public class UserController {
             if (username != null) {
                 userService.deleteProfileImage(username);
                 return new ResponseEntity<>("Фотография пользователя удалена", HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
-
-    @GetMapping("/profile")
-    @Transactional(readOnly = true)
-    public ResponseEntity<UserProfileDTO> getProfileData(HttpServletRequest request) {
-        try {
-//            System.out.println(request);
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
-            String username = jwtService.extractUserName(token);
-
-            if (username != null) {
-                UserProfileDTO userProfileDTO = userService.getProfileDataByUsername(username);
-                return new ResponseEntity<>(userProfileDTO, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
