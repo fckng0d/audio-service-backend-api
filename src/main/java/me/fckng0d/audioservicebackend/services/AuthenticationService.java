@@ -4,8 +4,9 @@ import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
-import me.fckng0d.audioservicebackend.models.enums.UserRoleEnum;
+import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.models.User;
+import me.fckng0d.audioservicebackend.models.enums.UserRoleEnum;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -57,14 +58,14 @@ public class AuthenticationService {
         try {
             User existingUser = userService.getByUsername(identifier);
             role = existingUser.getUserRoleEnum().toString();
-        } catch (UsernameNotFoundException ignored) {
-        }
-
-        try {
-            User existingUser = userService.getByEmail(identifier);
-            identifier = existingUser.getUsername();
-            role = existingUser.getUserRoleEnum().toString();
-        } catch (UsernameNotFoundException ignored) {
+        } catch (UsernameNotFoundException e) {
+            try {
+                User existingUser = userService.getByEmail(identifier);
+                identifier = existingUser.getUsername();
+                role = existingUser.getUserRoleEnum().toString();
+            } catch (UsernameNotFoundException ex) {
+                throw new UserNotFoundException("Пользователь не найден ни по имени пользователя, ни по email");
+            }
         }
 
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(

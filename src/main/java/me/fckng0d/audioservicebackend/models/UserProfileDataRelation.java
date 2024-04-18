@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "user_profile_image_relations")
+@Table(name = "user_profile_data_relations")
 public class UserProfileDataRelation {
     @Id
     @UuidGenerator

@@ -6,6 +6,7 @@ import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
 import me.fckng0d.audioservicebackend.DTO.TokenValidationRequest;
+import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.services.AuthenticationService;
 import me.fckng0d.audioservicebackend.services.JwtService;
 import me.fckng0d.audioservicebackend.services.UserService;
@@ -51,8 +52,13 @@ public class AuthController {
 
     //    @Operation(summary = "Авторизация пользователя")
     @PostMapping("/sign-in")
-    public JwtAuthenticationResponse signIn(@RequestBody SignInRequest request) {
-        return authenticationService.signIn(request);
+    public ResponseEntity<JwtAuthenticationResponse> signIn(@RequestBody SignInRequest request) {
+        try {
+            JwtAuthenticationResponse jwtAuthenticationResponse = authenticationService.signIn(request);
+            return new ResponseEntity<>(jwtAuthenticationResponse, HttpStatus.OK);
+        } catch (UserNotFoundException e) {
+            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        }
     }
 
     @PostMapping("/validate-token")
