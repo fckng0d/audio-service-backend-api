@@ -53,15 +53,23 @@ public class PlaylistContainerService {
     }
 
     @Transactional
-    public void createNewPublicPlaylistContainer(String name
-//                                           ,String description, PlayListOwnerEnum playlistOwner
-    ) {
+    public void createNewPublicPlaylistContainer(String name) {
         PlaylistContainer playlistContainer = new PlaylistContainer();
         playlistContainer.setName(name);
         playlistContainer.setDescription("");
         playlistContainer.setPlaylistOwner(PlayListOwnerEnum.PUBLIC);
 
         playlistContainerRepository.save(playlistContainer);
+    }
+
+    @Transactional
+    public PlaylistContainer createNewUserPlaylistContainer() {
+        PlaylistContainer playlistContainer = new PlaylistContainer();
+        playlistContainer.setName("Избранные плейлисты");
+        playlistContainer.setDescription("");
+        playlistContainer.setPlaylistOwner(PlayListOwnerEnum.USER);
+
+        return playlistContainerRepository.save(playlistContainer);
     }
 
     @Transactional

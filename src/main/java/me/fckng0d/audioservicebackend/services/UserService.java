@@ -3,9 +3,10 @@ package me.fckng0d.audioservicebackend.services;
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
 import me.fckng0d.audioservicebackend.models.Image;
-import me.fckng0d.audioservicebackend.models.enums.UserRoleEnum;
+import me.fckng0d.audioservicebackend.models.PlaylistContainer;
 import me.fckng0d.audioservicebackend.models.User;
 import me.fckng0d.audioservicebackend.models.UserProfileDataRelation;
+import me.fckng0d.audioservicebackend.models.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.repositories.UserProfileDataRelationRepository;
 import me.fckng0d.audioservicebackend.repositories.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserProfileDataRelationRepository userProfileDataRelationRepository;
     private final ImageService imageService;
+    private final PlaylistContainerService playlistContainerService;
 
     /**
      * Сохранение пользователя
@@ -28,7 +30,18 @@ public class UserService {
      * @return сохраненный пользователь
      */
     public User save(User user) {
-        return userRepository.save(user);
+        userRepository.save(user);
+
+        PlaylistContainer playlistContainer = playlistContainerService.createNewUserPlaylistContainer();
+
+        UserProfileDataRelation userProfileImageRelation = UserProfileDataRelation.builder()
+                .user(user)
+                .profileImage(null)
+                .playlistContainer(playlistContainer)
+                .build();
+        userProfileDataRelationRepository.save(userProfileImageRelation);
+
+        return user;
     }
 
 
@@ -39,19 +52,12 @@ public class UserService {
      */
     public User create(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            // Заменить на свои исключения
             throw new RuntimeException("Пользователь с таким именем уже существует");
         }
 
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Пользователь с таким email уже существует");
         }
-
-        var userProfileImageRelation = UserProfileDataRelation.builder()
-                .user(user)
-                .profileImage(null)
-                .build();
-        userProfileDataRelationRepository.save(userProfileImageRelation);
 
         return save(user);
     }
@@ -76,6 +82,14 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
+    }
+
+    public boolean isExistsUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean isExistsEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     @Transactional
