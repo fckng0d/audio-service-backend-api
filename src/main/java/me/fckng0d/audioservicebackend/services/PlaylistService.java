@@ -148,6 +148,17 @@ public class PlaylistService {
     }
 
     @Transactional
+    public void updatePlaylistName(UUID playlistId, String newPlaylistName) {
+        Optional<Playlist> playlistOptional = playlistRepository.getPlaylistsById(playlistId);
+
+        if (playlistOptional.isPresent()) {
+            Playlist playlist = playlistOptional.get();
+            playlist.setName(newPlaylistName);
+            playlistRepository.save(playlist);
+        }
+    }
+
+    @Transactional
     public Image getPlaylistImage(UUID playlistId) {
         Optional<Playlist> playlistOptional = playlistRepository.getPlaylistsById(playlistId);
 
@@ -159,7 +170,7 @@ public class PlaylistService {
     }
 
     @Transactional
-    public void updatePlaylist(UUID id, List<AudioFile> updatedAudioFiles) throws InterruptedException {
+    public void updatePlaylistAudioFilesOrder(UUID id, List<AudioFile> updatedAudioFiles) throws InterruptedException {
         Semaphore audioFilesSemaphore = audioFilesSemaphores.computeIfAbsent(id, k -> new Semaphore(1));
         audioFilesSemaphore.acquire();
         try {

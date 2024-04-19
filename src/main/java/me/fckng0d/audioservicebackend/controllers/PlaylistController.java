@@ -33,46 +33,23 @@ public class PlaylistController {
     private final PlaylistRepository playlistRepository;
     private final PlatformTransactionManager transactionManager;
 
-    @GetMapping("/playlists")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<PlaylistDTO>> getAllPlaylists() {
-//        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-//        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-//        TransactionStatus status = transactionManager.getTransaction(def);
-
-        try {
-
-//            Playlist playlist2 = new Playlist();
-//            playlist2.setName("Плейлист 1");
-//            playlist2.setAuthor("Модератор");
-//            List<AudioFile> audioFiles = audioFileService.getAllAudioFiles();
+//    @GetMapping("/playlists")
+//    @Transactional(readOnly = true)
+//    public ResponseEntity<List<PlaylistDTO>> getAllPlaylists() {
+//        try {
+//            List<Playlist> playlists = playlistService.getAllPlaylists();
 //
-//            for (AudioFile audioFile : audioFiles) {
-//                playlistService.addAudioFile(playlist2, audioFile);
+//            if (!playlists.isEmpty()) {
+//                List<PlaylistDTO> playlistDTOS = playlistService.convertListToDTOs(playlists);
+//                return new ResponseEntity<>(playlistDTOS, HttpStatus.OK);
+//            } else {
+//                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 //            }
-//            playlistRepository.save(playlist2);
-
-            List<Playlist> playlists = playlistService.getAllPlaylists();
-//            System.out.println(playlists.size());
-
-//            transactionManager.commit(status);
-
-            if (!playlists.isEmpty()) {
-
-                List<PlaylistDTO> playlistDTOS = playlistService.convertListToDTOs(playlists);
-
-                return new ResponseEntity<>(playlistDTOS, HttpStatus.OK);
-
-//                return new ResponseEntity<>(audioFiles, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-        } catch (Exception e) {
-//            transactionManager.rollback(status);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//
+//        } catch (Exception e) {
+//            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @GetMapping("/playlists/{id}")
     @Transactional(readOnly = true)
@@ -142,7 +119,7 @@ public class PlaylistController {
     }
 
     @PostMapping("/playlists/{playlistId}/upload")
-//    @CacheEvict(cacheNames="playlist", key="#id")
+    @Transactional
     public ResponseEntity<String> uploadAudioFile(@PathVariable UUID playlistId,
                                                   @RequestParam("title") String title,
                                                   @RequestParam("author") String author,
@@ -171,8 +148,8 @@ public class PlaylistController {
         }
     }
 
-    @Transactional
     @PutMapping("/playlists/{playlistId}/image/update")
+    @Transactional
     public ResponseEntity<PlaylistImageDTO> uploadProfileImage(@PathVariable UUID playlistId,
                                                                @RequestParam("playlistImage") MultipartFile playlistImage) {
         try {
@@ -193,26 +170,22 @@ public class PlaylistController {
         }
     }
 
-//    @PutMapping("/playlists/updateOrder")
-//    public ResponseEntity<String> updatePlaylistsOrder(@RequestBody List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) {
-//        try {
-//            playlistService.updatePlaylistsOrder(updatedWithIndexes);
-////            while (!playlistService.hasQueuedThreads()) {
-////                Thread.sleep(1);
-////            }
-//            return new ResponseEntity<>("Playlists order updated successfully", HttpStatus.OK);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>("Failed to update playlists order", HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+    @PutMapping("/playlists/{playlistId}/edit/name")
+    public ResponseEntity<String> updatePlaylistName(@PathVariable UUID playlistId,
+                                                       @RequestParam("newPlaylistName") String newPlaylistName) {
+        try {
+            playlistService.updatePlaylistName(playlistId, newPlaylistName);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update playlists order", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @PutMapping("/playlists/{id}/update")
+    @Transactional
     public ResponseEntity<String> updatePlaylist(@PathVariable UUID id, @RequestBody List<AudioFile> updatedAudioFiles) {
         try {
-            playlistService.updatePlaylist(id, updatedAudioFiles);
-//            while (!playlistService.hasQueuedThreads()) {
-//                Thread.sleep(1);
-//            }
+            playlistService.updatePlaylistAudioFilesOrder(id, updatedAudioFiles);
             return new ResponseEntity<>("Playlist updated successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to update playlist", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -220,13 +193,10 @@ public class PlaylistController {
     }
 
     @DeleteMapping("/playlists/{playlistId}/delete/{audioFileId}")
+    @Transactional
     public ResponseEntity<String> deleteAudioFileFromPlaylist(@PathVariable UUID playlistId, @PathVariable UUID audioFileId) {
         try {
             playlistService.deleteAudioFile(playlistId, audioFileId);
-//            while (!playlistService.hasQueuedThreads()) {
-//                Thread.sleep(1);
-//            }
-//            System.out.println    ("Удалено.\n###########################\n\n");
             return new ResponseEntity<>("Audiofile deleted successfully", HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();

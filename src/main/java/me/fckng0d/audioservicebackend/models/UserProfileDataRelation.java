@@ -26,9 +26,10 @@ public class UserProfileDataRelation {
     private User user;
 
     @OneToOne
-//    @Column(name = "profile_image")
     private Image profileImage;
 
     @OneToOne
     private PlaylistContainer playlistContainer;
+
+
 }

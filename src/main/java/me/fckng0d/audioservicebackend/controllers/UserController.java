@@ -2,7 +2,9 @@ package me.fckng0d.audioservicebackend.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
+import me.fckng0d.audioservicebackend.services.AuthenticationService;
 import me.fckng0d.audioservicebackend.services.ImageService;
 import me.fckng0d.audioservicebackend.services.JwtService;
 import me.fckng0d.audioservicebackend.services.UserService;
@@ -20,17 +22,53 @@ public class UserController {
     private final UserService userService;
     private final ImageService imageService;
     private final JwtService jwtService;
+    private final AuthenticationService authenticationService;
 
     @GetMapping("/profile")
     @Transactional(readOnly = true)
     public ResponseEntity<UserProfileDTO> getProfileData(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
+            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
             String username = jwtService.extractUserName(token);
 
             if (username != null) {
                 UserProfileDTO userProfileDTO = userService.getProfileDataByUsername(username);
                 return new ResponseEntity<>(userProfileDTO, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/profile/edit/username")
+    @Transactional
+    public ResponseEntity<JwtAuthenticationResponse> updateUsername(HttpServletRequest request,
+                                                                    @RequestParam("newUsername") String newUsername) {
+        try {
+            if (userService.isExistsUsername(newUsername)) {
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
+            }
+
+            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
+            String username = jwtService.extractUserName(token);
+
+            if (username != null) {
+                userService.updateUsername(username, newUsername);
+
+                var updatedUser = userService.getByUsername(newUsername);
+                var updatedUserDetails = userService.userDetailsService().loadUserByUsername(updatedUser.getUsername());
+                var newToken = jwtService.generateToken(updatedUserDetails);
+
+                JwtAuthenticationResponse jwtAuthenticationResponse =
+                        JwtAuthenticationResponse.builder()
+                                .token(newToken)
+                                .role(updatedUser.getUserRoleEnum().toString())
+                                .build();
+                return new ResponseEntity<>(jwtAuthenticationResponse, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
@@ -66,7 +104,8 @@ public class UserController {
     public ResponseEntity<String> uploadProfileImage(HttpServletRequest request,
                                                      @RequestParam("profileImage") MultipartFile profileImage) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
+            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
+            ;
             String username = jwtService.extractUserName(token);
 
             if (username != null) {
@@ -86,7 +125,8 @@ public class UserController {
     @DeleteMapping("/profile/image/delete")
     public ResponseEntity<String> deleteProfileImage(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());;
+            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
+            ;
             String username = jwtService.extractUserName(token);
 
             if (username != null) {

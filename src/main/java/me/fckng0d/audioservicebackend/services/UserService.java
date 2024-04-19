@@ -2,6 +2,7 @@ package me.fckng0d.audioservicebackend.services;
 
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
+import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.models.Image;
 import me.fckng0d.audioservicebackend.models.PlaylistContainer;
 import me.fckng0d.audioservicebackend.models.User;
@@ -84,6 +85,17 @@ public class UserService {
 
     }
 
+    @Transactional
+    public String getPasswordByUsername(String username) {
+        try {
+            User user = this.getByUsername(username);
+            System.out.println(username);
+            return user.getPassword();
+        } catch (UsernameNotFoundException e) {
+            throw new UserNotFoundException();
+        }
+    }
+
     public boolean isExistsUsername(String username) {
         return userRepository.existsByUsername(username);
     }
@@ -107,6 +119,18 @@ public class UserService {
 
         return userProfileDTO;
 
+    }
+
+    @Transactional
+    public void updateUsername(String oldUsername, String newUsername) {
+        try {
+            User user = this.getByUsername(oldUsername);
+
+            user.setUsername(newUsername);
+            userRepository.save(user);
+        } catch (UsernameNotFoundException e) {
+            throw new UserNotFoundException();
+        }
     }
 
     @Transactional
