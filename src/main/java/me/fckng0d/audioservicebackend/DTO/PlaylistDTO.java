@@ -1,8 +1,8 @@
 package me.fckng0d.audioservicebackend.DTO;
 
 import lombok.Data;
-import me.fckng0d.audioservicebackend.models.AudioFile;
-import me.fckng0d.audioservicebackend.models.Image;
+import me.fckng0d.audioservicebackend.model.Image;
+import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,6 +12,8 @@ public class PlaylistDTO {
     private UUID id;
     private String name;
     private String author;
+    private String ownerUsername;
+    private PlayListOwnerEnum playlistOwnerRole;
     private Integer countOfAudio;
     private Float duration;
     private Image image;

@@ -2,7 +2,7 @@ package me.fckng0d.audioservicebackend.DTO;
 
 import lombok.Builder;
 import lombok.Data;
-import me.fckng0d.audioservicebackend.models.Image;
+import me.fckng0d.audioservicebackend.model.Image;
 
 import java.util.UUID;
 
