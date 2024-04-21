@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserFavoritesController {
-    public static final String BEARER_PREFIX = "Bearer ";
     private final UserService userService;
     private final PlaylistService playlistService;
     private final UserFavoritesService userFavoritesService;
@@ -35,8 +34,7 @@ public class UserFavoritesController {
     @Transactional(readOnly = true)
     public ResponseEntity<PlaylistContainerDTO> getFavoritePlaylistContainer(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             if (username != null) {
                 PlaylistContainer playlistContainer =
@@ -58,8 +56,7 @@ public class UserFavoritesController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<AudioFileDTO>> getFavoriteAudioFiles(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             if (username != null) {
                 UserFavorites userFavorites = userFavoritesService.getByUsername(username);
@@ -68,12 +65,12 @@ public class UserFavoritesController {
                         .map(audioFile -> {
                             AudioFileDTO dto = new AudioFileDTO();
                             dto.setId(audioFile.getId());
-                            dto.setFileName(audioFile.getFileName());
+//                            dto.setFileName(audioFile.getFileName());
                             dto.setTitle(audioFile.getTitle());
                             dto.setAuthor(audioFile.getAuthor());
                             dto.setDuration(audioFile.getDuration());
                             dto.setCountOfAuditions(audioFile.getCountOfAuditions());
-                            dto.setGenres(audioFile.getGenres());
+//                            dto.setGenres(audioFile.getGenres());
                             dto.setImage(audioFile.getImage());
                             return dto;
                         })
@@ -97,8 +94,7 @@ public class UserFavoritesController {
                                                  @RequestParam("author") String playlistAuthor,
                                                  @RequestParam("imageFile") MultipartFile playlistImageFile) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             userFavoritesService.createNewFavoritePlaylist(playlistName,
                     playlistAuthor, playlistImageFile, username);
@@ -122,8 +118,7 @@ public class UserFavoritesController {
                     .flatMap(Optional::stream)
                     .collect(Collectors.toList());
 
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             UserFavorites userFavorites = userFavoritesService.getByUsername(username);
             playlistContainerService.updatePlaylistsOrder(userFavorites.getPlaylistContainer().getId(), playlists);

@@ -6,6 +6,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import me.fckng0d.audioservicebackend.model.user.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +22,8 @@ import java.util.function.Function;
 public class JwtService {
     @Value("${app.jwt.secret}")
     private String jwtSigningKey;
+    public static final String BEARER_PREFIX = "Bearer ";
+    public static final String HEADER_NAME = "Authorization";
 
     /**
      * Извлечение имени пользователя из токена
@@ -35,6 +38,11 @@ public class JwtService {
         } else {
             return null; // или другое значение по умолчанию
         }
+    }
+
+    public String extractUsernameFromRequest(HttpServletRequest request) {
+        String token = request.getHeader(HEADER_NAME).substring(BEARER_PREFIX.length());
+        return this.extractUserName(token);
     }
 
     /**

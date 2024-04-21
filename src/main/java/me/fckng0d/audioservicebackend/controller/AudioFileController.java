@@ -56,19 +56,17 @@ public class AudioFileController {
                         .map(audioFile -> {
                             AudioFileDTO dto = new AudioFileDTO();
                             dto.setId(audioFile.getId());
-                            dto.setFileName(audioFile.getFileName());
+//                            dto.setFileName(audioFile.getFileName());
                             dto.setTitle(audioFile.getTitle());
                             dto.setAuthor(audioFile.getAuthor());
                             dto.setDuration(audioFile.getDuration());
-                            dto.setGenres(audioFile.getGenres());
+//                            dto.setGenres(audioFile.getGenres());
                             dto.setImage(audioFile.getImage());
                             return dto;
                         })
                         .collect(Collectors.toList());
 
                 return new ResponseEntity<>(audioFileDTOs, HttpStatus.OK);
-
-//                return new ResponseEntity<>(audioFiles, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
@@ -154,22 +152,4 @@ public class AudioFileController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-//    @PostMapping("/")
-//    public ResponseEntity<String> uploadAudioFile(@RequestParam("title") String title,
-//                                                  @RequestParam("author") String author,
-//                                                  @RequestParam("audioFile") MultipartFile audioFile,
-//                                                  @RequestParam("imageFile") MultipartFile imageFile,
-//                                                  @RequestParam("genres") List<String> genres,
-//                                                  @RequestParam("duration") Float duration) {
-//
-//        try {
-//            audioFileService.saveAudioFile(audioFile, imageFile, title, author, genres, duration);
-//
-//            return new ResponseEntity<>("Audio file uploaded successfully", HttpStatus.OK);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 }

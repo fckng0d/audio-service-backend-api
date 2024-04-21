@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class PlaylistContainerController {
-    public static final String BEARER_PREFIX = "Bearer ";
     private final PlaylistService playlistService;
     private final PlaylistContainerService playlistContainerService;
     private final UserFavoritesService userFavoritesService;
@@ -65,9 +64,7 @@ public class PlaylistContainerController {
                             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PlaylistContainer not found")
                     );
 
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
-
+            String username = jwtService.extractUsernameFromRequest(request);
             UserRoleEnum userRole = userService.getRoleByUsername(username);
 
             PlaylistContainerDTO playlistContainerDTO = null;
@@ -120,9 +117,7 @@ public class PlaylistContainerController {
                 }
             }
 
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
-
+            String username = jwtService.extractUsernameFromRequest(request);
             UserRoleEnum playlistOwnerRole = userService.getRoleByUsername(username);
 
             Playlist playlist = null;

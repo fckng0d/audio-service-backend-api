@@ -21,7 +21,8 @@ import java.util.UUID;
         @Index(name = "idx_audio_file_id", columnList = "id"),
         @Index(name = "idx_audio_file_title", columnList = "title"),
         @Index(name = "idx_audio_file_author", columnList = "author"),
-//        @Index(name = "idx_audio_file_image_id", columnList = "image_id")
+//        @Index(name = "idx_audio_file_image_id", columnList = "image_id"),
+//        @Index(name = "idx_playlist_id", columnList = "playlists_id")
 })
 public class AudioFile {
     @Id

@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserController {
-    public static final String BEARER_PREFIX = "Bearer ";
     private final UserService userService;
     private final ImageService imageService;
     private final JwtService jwtService;
@@ -28,8 +27,7 @@ public class UserController {
     @Transactional(readOnly = true)
     public ResponseEntity<UserProfileDTO> getProfileData(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             if (username != null) {
                 UserProfileDTO userProfileDTO = userService.getProfileDataByUsername(username);
@@ -53,8 +51,7 @@ public class UserController {
                 return new ResponseEntity<>(HttpStatus.CONFLICT);
             }
 
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             if (username != null) {
                 userService.updateUsername(username, newUsername);
@@ -104,8 +101,7 @@ public class UserController {
     public ResponseEntity<String> uploadProfileImage(HttpServletRequest request,
                                                      @RequestParam("profileImage") MultipartFile profileImage) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             if (username != null) {
                 userService.uploadUserProfileImage(username, profileImage);
@@ -125,9 +121,7 @@ public class UserController {
     @DeleteMapping("/profile/image/delete")
     public ResponseEntity<String> deleteProfileImage(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(BEARER_PREFIX.length());
-            ;
-            String username = jwtService.extractUserName(token);
+            String username = jwtService.extractUsernameFromRequest(request);
 
             if (username != null) {
                 userService.deleteProfileImage(username);

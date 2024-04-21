@@ -4,7 +4,6 @@ import lombok.Data;
 import me.fckng0d.audioservicebackend.model.Image;
 import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -18,5 +17,5 @@ public class PlaylistDTO {
     private Float duration;
     private Image image;
     private Integer orderIndex;
-    private List<AudioFileDTO> audioFiles;
+//    private List<AudioFileDTO> audioFiles;
 }

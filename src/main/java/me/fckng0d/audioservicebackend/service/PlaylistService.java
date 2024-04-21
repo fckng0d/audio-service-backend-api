@@ -101,6 +101,7 @@ public class PlaylistService {
 
 
     //    @CacheEvict(cacheNames="playlist")
+    @Transactional
     public void addAudioFile(Playlist playlist, MultipartFile audioFile, MultipartFile imageFile,
                              String title, String author, List<String> genres, Float duration) {
         AudioFile audio = new AudioFile();
@@ -195,6 +196,12 @@ public class PlaylistService {
 
             }
 
+            if (updatedAudioFiles.size() < existingPlaylist.getAudioFiles().size()) {
+                existingPlaylist.getAudioFiles().stream()
+                        .filter(audioFile -> !updatedAudioFiles.contains(audioFile))
+                        .forEach(newAudioFiles::add);
+            }
+
             existingPlaylist.setAudioFiles(newAudioFiles);
 
             playlistRepository.save(existingPlaylist);
@@ -223,7 +230,7 @@ public class PlaylistService {
 
             existingPlaylist.getAudioFiles().remove(existingAudioFile);
 
-            existingPlaylist.setCountOfAudio(existingPlaylist.getCountOfAudio() - 1);
+            existingPlaylist.setCountOfAudio(existingPlaylist.getAudioFiles().size());
             existingPlaylist.setDuration(existingPlaylist.getDuration() - existingAudioFile.getDuration());
             playlistRepository.save(existingPlaylist);
             existingAudioFile.getPlaylists().remove(existingPlaylist);

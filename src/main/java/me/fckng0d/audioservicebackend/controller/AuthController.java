@@ -18,15 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-//@Tag(name = "Аутентификация")
 public class AuthController {
-    public static final String BEARER_PREFIX = "Bearer ";
-    public static final String HEADER_NAME = "Authorization";
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
     private final UserService userService;
 
-    //    @Operation(summary = "Регистрация пользователя")
     @PostMapping("/sign-up")
     public JwtAuthenticationResponse signUp(@RequestBody @Valid SignUpRequest request) {
         return authenticationService.signUp(request);
@@ -50,7 +46,6 @@ public class AuthController {
         return ResponseEntity.ok("Такого email нет");
     }
 
-    //    @Operation(summary = "Авторизация пользователя")
     @PostMapping("/sign-in")
     public ResponseEntity<JwtAuthenticationResponse> signIn(@RequestBody SignInRequest request) {
         try {
