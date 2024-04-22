@@ -68,6 +68,7 @@ public class PlaylistController {
                 playlistDTO.setId(playlist.getId());
                 playlistDTO.setName(playlist.getName());
                 playlistDTO.setAuthor(playlist.getAuthor());
+                playlistDTO.setPlaylistOwnerRole(playlist.getPlaylistOwnerRole());
                 playlistDTO.setDuration(playlist.getDuration());
                 playlistDTO.setCountOfAudio(playlist.getCountOfAudio());
                 playlistDTO.setImage(playlist.getImage());

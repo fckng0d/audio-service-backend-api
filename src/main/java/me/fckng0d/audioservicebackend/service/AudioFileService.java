@@ -2,7 +2,6 @@ package me.fckng0d.audioservicebackend.service;
 
 import me.fckng0d.audioservicebackend.model.AudioFile;
 import me.fckng0d.audioservicebackend.model.Image;
-import me.fckng0d.audioservicebackend.model.Playlist;
 import me.fckng0d.audioservicebackend.repositoriy.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositoriy.ImageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
@@ -75,17 +77,22 @@ public class AudioFileService {
         return audioFileRepository.getAudioFileById(id);
     }
 
-    public List<AudioFile> getAllAudioFilesByPlaylistId(Long playlistId) {
-        List<AudioFile> audioFiles = new ArrayList<>();
-        for (AudioFile audioFile : getAllAudioFiles()) {
-            for (Playlist playlist : audioFile.getPlaylists()) {
-                if (Objects.equals(playlist.getId(), playlistId)) {
-                    audioFiles.add(audioFile);
-                }
-            }
-        }
-        return audioFiles;
+    @Transactional
+    public void save(AudioFile audioFile) {
+        audioFileRepository.save(audioFile);
     }
+
+//    public List<AudioFile> getAllAudioFilesByPlaylistId(Long playlistId) {
+//        List<AudioFile> audioFiles = new ArrayList<>();
+//        for (AudioFile audioFile : getAllAudioFiles()) {
+//            for (Playlist playlist : audioFile.getPlaylists()) {
+//                if (Objects.equals(playlist.getId(), playlistId)) {
+//                    audioFiles.add(audioFile);
+//                }
+//            }
+//        }
+//        return audioFiles;
+//    }
 
     @Transactional
     public void incrementCountOfAuditions(UUID id) throws InterruptedException {

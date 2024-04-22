@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
-import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
+import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
 import me.fckng0d.audioservicebackend.model.user.User;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -64,7 +64,7 @@ public class AuthenticationService {
                 identifier = existingUser.getUsername();
                 role = existingUser.getUserRoleEnum().toString();
             } catch (UsernameNotFoundException ex) {
-                throw new UserNotFoundException("Пользователь не найден ни по имени пользователя, ни по email");
+                throw new AudioFileIsAlreadyInPlaylistException("Пользователь не найден ни по имени пользователя, ни по email");
             }
         }
 

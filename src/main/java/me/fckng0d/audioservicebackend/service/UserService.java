@@ -2,7 +2,7 @@ package me.fckng0d.audioservicebackend.service;
 
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
-import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
+import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
 import me.fckng0d.audioservicebackend.model.Image;
 import me.fckng0d.audioservicebackend.model.PlaylistContainer;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
@@ -114,7 +114,7 @@ public class UserService {
             System.out.println(username);
             return user.getPassword();
         } catch (UsernameNotFoundException e) {
-            throw new UserNotFoundException();
+            throw new AudioFileIsAlreadyInPlaylistException();
         }
     }
 
@@ -158,7 +158,7 @@ public class UserService {
             user.setUsername(newUsername);
             userRepository.save(user);
         } catch (UsernameNotFoundException e) {
-            throw new UserNotFoundException();
+            throw new AudioFileIsAlreadyInPlaylistException();
         }
     }
 

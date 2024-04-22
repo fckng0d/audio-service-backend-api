@@ -6,7 +6,7 @@ import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
 import me.fckng0d.audioservicebackend.DTO.TokenValidationRequest;
-import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
+import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
 import me.fckng0d.audioservicebackend.service.AuthenticationService;
 import me.fckng0d.audioservicebackend.service.JwtService;
 import me.fckng0d.audioservicebackend.service.UserService;
@@ -51,7 +51,7 @@ public class AuthController {
         try {
             JwtAuthenticationResponse jwtAuthenticationResponse = authenticationService.signIn(request);
             return new ResponseEntity<>(jwtAuthenticationResponse, HttpStatus.OK);
-        } catch (UserNotFoundException e) {
+        } catch (AudioFileIsAlreadyInPlaylistException e) {
             return new ResponseEntity<>(null, HttpStatus.CONFLICT);
         }
     }
