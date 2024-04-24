@@ -29,6 +29,7 @@ public class UserFavoritesService {
     private final PlaylistService playlistService;
     private final AudioFileService audioFileService;
     private final Map<String, Semaphore> audioFilesSemaphores = new ConcurrentHashMap<>();
+    private final Map<String, Semaphore> playlistsSemaphores = new ConcurrentHashMap<>();
 
 
     public UserFavorites getByUsername(String username) {
@@ -89,6 +90,57 @@ public class UserFavoritesService {
     }
 
     @Transactional
+    public void addPlaylistToFavorites(String username, UUID playlistId) throws InterruptedException {
+        Semaphore playlistsSemaphore = playlistsSemaphores.computeIfAbsent(username, k -> new Semaphore(1));
+        playlistsSemaphore.acquire();
+        try {
+            UserFavorites userFavorites = this.getByUsername(username);
+
+            Playlist playlist = playlistService.
+                    getPlaylistById(playlistId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Playlist not found "));
+
+            PlaylistContainer playlistContainer = userFavorites.getPlaylistContainer();
+
+            playlistContainerService.addPlaylist(playlistContainer, playlist);
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            playlistsSemaphore.release();
+            if (playlistsSemaphore.availablePermits() == 1) {
+                playlistsSemaphores.remove(username);
+            }
+        }
+    }
+
+    @Transactional
+    public void deletePlaylistFromFavorites(String username, UUID playlistId) throws InterruptedException {
+        Semaphore playlistsSemaphore = playlistsSemaphores.computeIfAbsent(username, k -> new Semaphore(1));
+        playlistsSemaphore.acquire();
+        try {
+            UserFavorites userFavorites = this.getByUsername(username);
+
+            Playlist playlist = playlistService.
+                    getPlaylistById(playlistId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Playlist not found "));
+
+            PlaylistContainer playlistContainer = userFavorites.getPlaylistContainer();
+
+            playlistContainerService.deletePlaylist(playlistContainer, playlist);
+            userFavoritesRepository.save(userFavorites);
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            playlistsSemaphore.release();
+            if (playlistsSemaphore.availablePermits() == 1) {
+                playlistsSemaphores.remove(username);
+            }
+        }
+    }
+
+    @Transactional
     public AudioFile addAudioFileToFavorites(String username, UUID audioFileId) throws InterruptedException {
         Semaphore audioFilesSemaphore = audioFilesSemaphores.computeIfAbsent(username, k -> new Semaphore(1));
         audioFilesSemaphore.acquire();
@@ -100,7 +152,8 @@ public class UserFavoritesService {
                         .orElseThrow(() -> new ResourceNotFoundException("AudioFile not found "));
 
                 if (userFavorites.getFavoriteAudioFiles().contains(audioFile)) {
-                    return null;
+//                    return null;
+                    userFavorites.getFavoriteAudioFiles().remove(audioFile);
 //                    throw new AudioFileIsAlreadyInPlaylistException("AudioFile is already in favorites");
                 }
 

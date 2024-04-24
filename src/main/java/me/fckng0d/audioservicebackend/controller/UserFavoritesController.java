@@ -147,6 +147,36 @@ public class UserFavoritesController {
         }
     }
 
+    @PostMapping("/favorites/playlists/add/{playlistId}")
+    @Transactional
+    public ResponseEntity<String> addPlaylist(HttpServletRequest request,
+                                                 @PathVariable UUID playlistId) {
+        try {
+            String username = jwtService.extractUsernameFromRequest(request);
+
+            userFavoritesService.addPlaylistToFavorites(username, playlistId);
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/favorites/playlists/delete/{playlistId}")
+    @Transactional
+    public ResponseEntity<String> deletePlaylist(HttpServletRequest request,
+                                                 @PathVariable UUID playlistId) {
+        try {
+            String username = jwtService.extractUsernameFromRequest(request);
+
+            userFavoritesService.deletePlaylistFromFavorites(username, playlistId);
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PutMapping("/favorites/playlists/updateOrder")
     @Transactional
     public ResponseEntity<String> updatePlaylistsOrder(HttpServletRequest request,

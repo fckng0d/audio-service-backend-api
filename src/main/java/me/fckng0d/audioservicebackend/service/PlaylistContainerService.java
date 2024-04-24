@@ -42,7 +42,7 @@ public class PlaylistContainerService {
     }
 
     public void save(PlaylistContainer playlistContainer) {
-       playlistContainerRepository.save(playlistContainer);
+        playlistContainerRepository.save(playlistContainer);
     }
 
     public PlaylistContainerDTO convertToDTO(PlaylistContainer playlistContainer) {
@@ -65,13 +65,48 @@ public class PlaylistContainerService {
         PlaylistContainer playlistContainer = playlistContainerOptional
                 .orElseThrow(() -> new RuntimeException("PlaylistContainer not found"));
 
-        if (playlistContainer.getCountOfPlaylists() >= 30) {
+        int limitPlaylistsCount = (playlistContainer.getPlaylistOwner().toString().equals("USER")) ? 100 : 30;
+        if (playlistContainer.getCountOfPlaylists() >= limitPlaylistsCount) {
             return;
         }
 
         playlist.getPlaylistContainers().add(playlistContainer);
         playlistRepository.save(playlist);
+
+        if (playlistContainer.getPlaylists().contains(playlist)) {
+            playlistContainer.getPlaylists().remove(playlist);
+        }
+
         playlistContainer.getPlaylists().add(0, playlist);
+        playlistContainer.setCountOfPlaylists(playlistContainer.getCountOfPlaylists());
+        playlistContainerRepository.save(playlistContainer);
+    }
+
+    @Transactional
+    public void addPlaylist(PlaylistContainer playlistContainer, Playlist playlist) {
+        int limitPlaylistsCount = (playlistContainer.getPlaylistOwner().toString().equals("USER")) ? 100 : 30;
+        if (playlistContainer.getCountOfPlaylists() >= limitPlaylistsCount) {
+            return;
+        }
+
+        playlist.getPlaylistContainers().add(playlistContainer);
+        playlistRepository.save(playlist);
+
+        if (playlistContainer.getPlaylists().contains(playlist)) {
+            playlistContainer.getPlaylists().remove(playlist);
+        }
+
+        playlistContainer.getPlaylists().add(0, playlist);
+        playlistContainer.setCountOfPlaylists(playlistContainer.getCountOfPlaylists());
+        playlistContainerRepository.save(playlistContainer);
+    }
+
+    @Transactional
+    public void deletePlaylist(PlaylistContainer playlistContainer, Playlist playlist)  {
+        playlist.getPlaylistContainers().remove(playlistContainer);
+        playlistRepository.save(playlist);
+
+        playlistContainer.getPlaylists().remove(playlist);
         playlistContainer.setCountOfPlaylists(playlistContainer.getCountOfPlaylists());
         playlistContainerRepository.save(playlistContainer);
     }

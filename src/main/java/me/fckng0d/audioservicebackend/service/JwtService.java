@@ -22,6 +22,8 @@ import java.util.function.Function;
 public class JwtService {
     @Value("${app.jwt.secret}")
     private String jwtSigningKey;
+//    @Value("${app.jwt.lifetime}")
+//    private Long jwtLifeTime;
     public static final String BEARER_PREFIX = "Bearer ";
     public static final String HEADER_NAME = "Authorization";
 

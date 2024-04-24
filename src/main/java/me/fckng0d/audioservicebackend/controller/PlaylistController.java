@@ -46,7 +46,7 @@ public class PlaylistController {
     @Transactional(readOnly = true)
 //    @Cacheable(cacheNames = {"playlist", "audio_file", "image"})
     public ResponseEntity<PlaylistDTO> getPlaylistDataById(HttpServletRequest request,
-                                                       @PathVariable UUID id) {
+                                                           @PathVariable UUID id) {
 
         try {
             Optional<Playlist> optionalPlaylist = playlistService.getPlaylistById(id);
@@ -122,29 +122,30 @@ public class PlaylistController {
                 List<AudioFileDTO> audioFileDTOs =
                         audioFiles
 //                        audioFilesPageable
-                        .stream()
-                        .skip(startIndex)
-                        .limit(count)
-                        .map(audioFile -> {
-                            AudioFileDTO dto = new AudioFileDTO();
-                            dto.setId(audioFile.getId());
+                                .stream()
+                                .skip(startIndex)
+                                .limit(count)
+                                .map(audioFile -> {
+                                    AudioFileDTO dto = new AudioFileDTO();
+                                    dto.setId(audioFile.getId());
 //                            dto.setFileName(audioFile.getFileName());
-                            dto.setTitle(audioFile.getTitle());
-                            dto.setAuthor(audioFile.getAuthor());
-                            dto.setDuration(audioFile.getDuration());
-                            dto.setCountOfAuditions(audioFile.getCountOfAuditions());
+                                    dto.setTitle(audioFile.getTitle());
+                                    dto.setAuthor(audioFile.getAuthor());
+                                    dto.setDuration(audioFile.getDuration());
+                                    dto.setCountOfAuditions(audioFile.getCountOfAuditions());
 //                            dto.setGenres(audioFile.getGenres());
-                            dto.setImage(audioFile.getImage());
-                            int currentIndex = index.getAndIncrement();
+                                    dto.setImage(audioFile.getImage());
+                                    int currentIndex = index.getAndIncrement();
 //                            System.out.println(index.getAndIncrement());
-                            dto.setIndexInPlaylist(currentIndex);
-                            return dto;
-                        })
-                        .collect(Collectors.toList());
+                                    dto.setIndexInPlaylist(currentIndex);
+                                    return dto;
+                                })
+                                .collect(Collectors.toList());
 
 //                System.out.println(audioFileDTOs.size());
 
                 PlaylistAudioFilesDTO playlistAudioFilesDTO = PlaylistAudioFilesDTO.builder()
+                        .playlistId(playlist.getId())
                         .audioFiles(audioFileDTOs)
                         .build();
 
@@ -155,6 +156,26 @@ public class PlaylistController {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/playlists/delete/{playlistId}")
+    @Transactional
+    public ResponseEntity<String> deletePlaylist(@PathVariable UUID playlistId) {
+        try {
+
+            Optional<Playlist> playlistOptional = playlistService.getPlaylistById(playlistId);
+            if (playlistOptional.isPresent()) {
+                Playlist playlist = playlistOptional.get();
+                playlistService.deletePlaylist(playlist);
+
+                return new ResponseEntity<>(HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

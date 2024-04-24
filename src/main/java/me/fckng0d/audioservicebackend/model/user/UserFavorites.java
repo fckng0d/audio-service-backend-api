@@ -12,11 +12,12 @@ import org.hibernate.annotations.UuidGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-@Entity
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Entity
 @Table(name = "user_favorites")
 public class UserFavorites {
     @Id
@@ -28,7 +29,7 @@ public class UserFavorites {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-    @OneToOne
+    @OneToOne()
     private PlaylistContainer playlistContainer;
 
     @ManyToMany

@@ -144,6 +144,33 @@ public class PlaylistContainerController {
         }
     }
 
+    @DeleteMapping("/playlistContainers/{playlistContainerId}/delete/{playlistId}")
+    @Transactional
+    public ResponseEntity<String> deletePlaylistFromPlaylistContainers(@PathVariable UUID playlistContainerId,
+                                                                  @PathVariable UUID playlistId) {
+        try {
+            Optional<PlaylistContainer> playlistContainerOptional =
+                    playlistContainerService.getPlaylistContainerById(playlistContainerId);
+            if (playlistContainerOptional.isPresent()) {
+                PlaylistContainer playlistContainer = playlistContainerOptional.get();
+
+                Optional<Playlist> playlistOptional = playlistService.getPlaylistById(playlistId);
+                if (playlistOptional.isPresent()) {
+                    Playlist playlist = playlistOptional.get();
+                    playlistContainerService.deletePlaylist(playlistContainer, playlist);
+
+                    return new ResponseEntity<>(HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+            }
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @PutMapping("/playlistContainers/{playlistContainerId}/updateOrder")
     public ResponseEntity<String> updatePlaylistsOrder(@PathVariable UUID playlistContainerId,
                                                        @RequestBody List<UpdatedPlaylistOrderIndexesDto> updatedWithIndexes) {

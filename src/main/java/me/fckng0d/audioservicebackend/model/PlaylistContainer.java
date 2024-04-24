@@ -43,7 +43,7 @@ public class PlaylistContainer {
     private String ownerUsername;
 
     @Column(name = "count_of_playlists")
-    @Max(value = 30)
+    @Max(value = 100)
     private Integer countOfPlaylists = 0;
 
     @ManyToMany

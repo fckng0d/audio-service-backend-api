@@ -44,6 +44,9 @@ public class PlaylistService {
         return playlistRepository.getPlaylistsById(id);
     }
 
+    public void save(Playlist playlist) {
+        playlistRepository.save(playlist);
+    }
 
     public PlaylistDTO convertToDTO(Playlist playlist) {
         PlaylistDTO dto = new PlaylistDTO();
@@ -97,6 +100,11 @@ public class PlaylistService {
         }
 
         return null;
+    }
+
+    @Transactional
+    public void deletePlaylist(Playlist playlist)  {
+        playlistRepository.delete(playlist);
     }
 
 

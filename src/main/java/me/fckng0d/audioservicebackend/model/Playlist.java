@@ -54,6 +54,14 @@ public class Playlist {
     @OrderColumn(name = "audio_order")
     private List<AudioFile> audioFiles = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "playlists")
-    private List<PlaylistContainer> PlaylistContainers = new ArrayList<>();
+    @ManyToMany(mappedBy = "playlists", cascade = CascadeType.ALL)
+    private List<PlaylistContainer> playlistContainers = new ArrayList<>();
+
+    @PreRemove
+    private void preRemove() {
+        for (PlaylistContainer container : playlistContainers) {
+            container.getPlaylists().remove(this);
+        }
+        playlistContainers.clear();
+    }
 }

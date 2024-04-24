@@ -61,9 +61,22 @@ public class AudioFile {
     @OneToOne
     private Image image = null;
 
-    @ManyToMany(mappedBy = "audioFiles")
+    @ManyToMany(mappedBy = "audioFiles", cascade = CascadeType.ALL)
     private List<Playlist> playlists = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "favoriteAudioFiles")
+    @ManyToMany(mappedBy = "favoriteAudioFiles", cascade = CascadeType.ALL)
     private List<UserFavorites> userFavorites = new ArrayList<>();
+
+    @PreRemove
+    private void preRemove() {
+        for (Playlist playlist : playlists) {
+            playlist.getAudioFiles().remove(this);
+        }
+        playlists.clear();
+
+        for (UserFavorites userFavorite : userFavorites) {
+            userFavorite.getFavoriteAudioFiles().remove(this);
+        }
+        userFavorites.clear();
+    }
 }
