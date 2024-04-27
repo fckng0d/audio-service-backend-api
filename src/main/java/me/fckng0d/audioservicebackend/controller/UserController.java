@@ -63,7 +63,7 @@ public class UserController {
                 JwtAuthenticationResponse jwtAuthenticationResponse =
                         JwtAuthenticationResponse.builder()
                                 .token(newToken)
-                                .role(updatedUser.getUserRoleEnum().toString())
+//                                .role(updatedUser.getUserRoleEnum().toString())
                                 .build();
                 return new ResponseEntity<>(jwtAuthenticationResponse, HttpStatus.OK);
             } else {

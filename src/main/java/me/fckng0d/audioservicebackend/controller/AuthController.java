@@ -1,5 +1,6 @@
 package me.fckng0d.audioservicebackend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
@@ -7,6 +8,8 @@ import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
 import me.fckng0d.audioservicebackend.DTO.TokenValidationRequest;
 import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
+import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
+import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.service.AuthenticationService;
 import me.fckng0d.audioservicebackend.service.JwtService;
 import me.fckng0d.audioservicebackend.service.UserService;
@@ -51,8 +54,24 @@ public class AuthController {
         try {
             JwtAuthenticationResponse jwtAuthenticationResponse = authenticationService.signIn(request);
             return new ResponseEntity<>(jwtAuthenticationResponse, HttpStatus.OK);
-        } catch (AudioFileIsAlreadyInPlaylistException e) {
+        } catch (UserNotFoundException e) {
             return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        }
+    }
+
+    @GetMapping("/check-admin-role")
+    public ResponseEntity<Boolean> checkAdminRole(HttpServletRequest request) {
+        try {
+            String username = jwtService.extractUsernameFromRequest(request);
+            UserRoleEnum userRole = userService.getRoleByUsername(username);
+
+            if (userRole.equals(UserRoleEnum.ROLE_ADMIN)) {
+                return new ResponseEntity<>(true, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(false, HttpStatus.FORBIDDEN);
+            }
+        } catch (AudioFileIsAlreadyInPlaylistException e) {
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

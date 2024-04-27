@@ -51,10 +51,8 @@ public class SecurityConfiguration {
 
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/auth/**").permitAll()
-//                        .requestMatchers("/api/public/playlistContainers/*").permitAll()
-//                        .requestMatchers("/**").permitAll()
-//                        .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
-//                        .requestMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/playlistContainers/{id}/add").hasRole("ADMIN")
+                        .requestMatchers("/api/public/playlistContainers/create").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider())

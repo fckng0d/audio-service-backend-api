@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
-import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
-import me.fckng0d.audioservicebackend.model.user.User;
+import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
+import me.fckng0d.audioservicebackend.model.user.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -42,7 +42,7 @@ public class AuthenticationService {
         user.setEmail(null);
         user.setPassword(null);
         var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt, user.getUserRoleEnum().toString());
+        return new JwtAuthenticationResponse(jwt/*, user.getUserRoleEnum().toString()*/);
     }
 
     /**
@@ -52,19 +52,20 @@ public class AuthenticationService {
      * @return токен
      */
     public JwtAuthenticationResponse signIn(SignInRequest request) {
-        String role = "";
+//        String role = "";
         String identifier = request.getIdentifier();
 
-        try {
-            User existingUser = userService.getByUsername(identifier);
-            role = existingUser.getUserRoleEnum().toString();
-        } catch (UsernameNotFoundException e) {
+        if (identifier.matches("[a-zA-Z0-9]+")) {
+                boolean isExistsUsername = userService.isExistsUsername(identifier);
+                if (!isExistsUsername) {
+                    throw new UserNotFoundException("Пользователь не найден по username");
+                }
+        } else {
             try {
                 User existingUser = userService.getByEmail(identifier);
                 identifier = existingUser.getUsername();
-                role = existingUser.getUserRoleEnum().toString();
-            } catch (UsernameNotFoundException ex) {
-                throw new AudioFileIsAlreadyInPlaylistException("Пользователь не найден ни по имени пользователя, ни по email");
+            } catch (UsernameNotFoundException e) {
+                throw new UserNotFoundException("Пользователь не найден по email");
             }
         }
 
@@ -78,6 +79,6 @@ public class AuthenticationService {
                 .loadUserByUsername(identifier);
 
         var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt, role);
+        return new JwtAuthenticationResponse(jwt/*, role*/);
     }
 }

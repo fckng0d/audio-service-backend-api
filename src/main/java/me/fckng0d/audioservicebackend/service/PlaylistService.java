@@ -110,7 +110,7 @@ public class PlaylistService {
 
     //    @CacheEvict(cacheNames="playlist")
     @Transactional
-    public void addAudioFile(Playlist playlist, MultipartFile audioFile, MultipartFile imageFile,
+    public AudioFile addAudioFile(Playlist playlist, MultipartFile audioFile, MultipartFile imageFile,
                              String title, String author, List<String> genres, Float duration) {
         AudioFile audio = new AudioFile();
         audio.setFileName(audioFile.getOriginalFilename());
@@ -142,8 +142,10 @@ public class PlaylistService {
 
         audio.getPlaylists().add(playlist);
         audioFileRepository.save(audio);
-        playlist.getAudioFiles().add(audio);
+        playlist.getAudioFiles().add(0, audio);
         playlistRepository.save(playlist);
+
+        return audio;
     }
 
     @Transactional

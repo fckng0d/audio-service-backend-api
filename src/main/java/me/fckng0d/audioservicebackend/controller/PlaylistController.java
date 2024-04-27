@@ -211,7 +211,7 @@ public class PlaylistController {
 
     @PostMapping("/playlists/{playlistId}/upload")
     @Transactional
-    public ResponseEntity<String> uploadAudioFile(@PathVariable UUID playlistId,
+    public ResponseEntity<AudioFileDTO> uploadAudioFile(@PathVariable UUID playlistId,
                                                   @RequestParam("title") String title,
                                                   @RequestParam("author") String author,
                                                   @RequestParam("audioFile") MultipartFile audioFile,
@@ -223,13 +223,25 @@ public class PlaylistController {
             Playlist playlist = playlistRepository.findById(playlistId)
                     .orElseThrow(() -> new RuntimeException("Playlist not found"));
 
-            playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
+            if (Float.isNaN(duration)) {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
 
+            AudioFile audioFileResponse =  playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
 
-            return new ResponseEntity<>("Audio file uploaded successfully", HttpStatus.OK);
+            AudioFileDTO dto = new AudioFileDTO();
+            dto.setId(audioFileResponse.getId());
+            dto.setTitle(audioFileResponse.getTitle());
+            dto.setAuthor(audioFileResponse.getAuthor());
+            dto.setDuration(audioFileResponse.getDuration());
+            dto.setCountOfAuditions(audioFileResponse.getCountOfAuditions());
+            dto.setImage(audioFileResponse.getImage());
+            dto.setIndexInPlaylist(0);
+
+            return new ResponseEntity<>(dto, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>("Failed to upload audio file", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
