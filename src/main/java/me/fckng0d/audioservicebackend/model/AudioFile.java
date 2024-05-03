@@ -55,8 +55,11 @@ public class AudioFile {
 
     @Lob
     @Column(name = "data")
-    @NotNull
+//    @NotNull
     private byte[] data;
+
+    @Column(name = "url_path")
+    private String urlPath;
 
     @OneToOne
     private Image image = null;

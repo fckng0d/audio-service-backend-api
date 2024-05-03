@@ -1,11 +1,11 @@
 package me.fckng0d.audioservicebackend.controller;
 
-import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
+import lombok.RequiredArgsConstructor;
+import me.fckng0d.audioservicebackend.DTO.AudioDataDTO;
 import me.fckng0d.audioservicebackend.model.AudioFile;
 import me.fckng0d.audioservicebackend.model.Image;
 import me.fckng0d.audioservicebackend.service.AudioFileService;
 import me.fckng0d.audioservicebackend.service.ImageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,13 +18,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "${cross-origin}", maxAge = 3600)
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class AudioFileController {
 
@@ -32,78 +31,89 @@ public class AudioFileController {
     private final ImageService imageService;
     private final PlatformTransactionManager transactionManager;
 
-    @Autowired
-    public AudioFileController(AudioFileService audioFileService, ImageService imageService, PlatformTransactionManager transactionManager) {
-        this.audioFileService = audioFileService;
-        this.imageService = imageService;
-        this.transactionManager = transactionManager;
-    }
-
-    @GetMapping("/audio")
-    public ResponseEntity<List<AudioFileDTO>> getAllAudioFiles() {
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        TransactionStatus status = transactionManager.getTransaction(def);
-
-        try {
-            List<AudioFile> audioFiles = audioFileService.getAllAudioFiles();
-
-            transactionManager.commit(status);
-
-            if (!audioFiles.isEmpty()) {
-
-                List<AudioFileDTO> audioFileDTOs = audioFiles.stream()
-                        .map(audioFile -> {
-                            AudioFileDTO dto = new AudioFileDTO();
-                            dto.setId(audioFile.getId());
-//                            dto.setFileName(audioFile.getFileName());
-                            dto.setTitle(audioFile.getTitle());
-                            dto.setAuthor(audioFile.getAuthor());
-                            dto.setDuration(audioFile.getDuration());
-//                            dto.setGenres(audioFile.getGenres());
-                            dto.setImage(audioFile.getImage());
-                            return dto;
-                        })
-                        .collect(Collectors.toList());
-
-                return new ResponseEntity<>(audioFileDTOs, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-        } catch (Exception e) {
-            transactionManager.rollback(status);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
     @GetMapping("/audio/{id}")
 //    @Cacheable("audio_file")
-    public ResponseEntity<byte[]> getAudioFile(@PathVariable UUID id) {
+    public ResponseEntity<?> getAudioFile(@PathVariable UUID id) {
         try {
             AudioFile audioFile = audioFileService.getAudioFileById(id)
                     .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentLength(audioFile.getData().length);
-            headers.set("Accept-Ranges", "bytes");
+            if (audioFile.getUrlPath() == null) {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentLength(audioFile.getData().length);
+                headers.set("Accept-Ranges", "bytes");
 
 //                String encodedFileName = Base64.getEncoder()
 //                        .encodeToString(audioFile.getFileName().getBytes(StandardCharsets.UTF_8));
 //
 //                headers.setContentDispositionFormData("attachment", encodedFileName);
 
+                return new ResponseEntity<>(audioFile.getData(), headers, HttpStatus.OK);
 
-            return new ResponseEntity<>(audioFile.getData(), headers, HttpStatus.OK);
+            } else if (audioFile.getData() == null) {
 
+                AudioDataDTO audioDataDTO = AudioDataDTO.builder()
+                        .data(null)
+                        .urlPath(audioFile.getUrlPath())
+                        .build();
+
+                return new ResponseEntity<>(audioDataDTO, HttpStatus.OK);
+            }
+
+            return new ResponseEntity<>( HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+//    @GetMapping("/audio-url/{id}")
+////    @Cacheable("audio_file")
+//    public ResponseEntity<String> getAudioFileUrlPath(@PathVariable UUID id) {
+//        try {
+//            AudioFile audioFile = audioFileService.getAudioFileById(id)
+//                    .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
+//
+//            String urlPath = audioFile.getUrlPath();
+//
+//            return new ResponseEntity<>(urlPath, HttpStatus.OK);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//    }
+
+
+
+//    @GetMapping("/audio-stream/{id}")
+////    @Cacheable("audio_file")
+//    public ResponseEntity<InputStreamResource> getAudioFileStream(@PathVariable UUID id) {
+//        try {
+//            AudioFile audioFile = audioFileService.getAudioFileById(id)
+//                    .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
+//
+//            InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(audioFile.getData()));
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+//            headers.setContentLength(audioFile.getData().length);
+//            headers.set("Accept-Ranges", "bytes");
+//
+//            return ResponseEntity.ok()
+//                    .headers(headers)
+//                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+//                    .body(resource);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//    }
 
     //    @Cacheable("audioImages")
     @GetMapping("/audio/{id}/image")

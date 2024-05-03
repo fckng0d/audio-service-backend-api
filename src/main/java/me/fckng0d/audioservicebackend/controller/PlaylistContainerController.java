@@ -9,6 +9,7 @@ import me.fckng0d.audioservicebackend.model.PlaylistContainer;
 import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.service.*;
+import me.fckng0d.audioservicebackend.service.jwt.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

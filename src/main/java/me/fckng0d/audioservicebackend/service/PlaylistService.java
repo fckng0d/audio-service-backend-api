@@ -9,6 +9,7 @@ import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
 import me.fckng0d.audioservicebackend.repositoriy.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositoriy.ImageRepository;
 import me.fckng0d.audioservicebackend.repositoriy.PlaylistRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,20 +19,22 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
 public class PlaylistService {
+    @Value("${app.isUsedAWS}")
+    private boolean isUsedAWS;
+
+    private final S3Service s3Service;
+
     private final AudioFileRepository audioFileRepository;
     private final PlaylistRepository playlistRepository;
     private final ImageRepository imageRepository;
     private final ImageService imageService;
 
     private final Map<UUID, Semaphore> audioFilesSemaphores = new ConcurrentHashMap<>();
-    //    private final Semaphore audioFilesSemaphore = new Semaphore(1);
-    private final Semaphore playlistsSemaphore = new Semaphore(1);
-    private final AtomicInteger countOfRequests = new AtomicInteger(0);
+    private final Map<UUID, Semaphore> uploadAudioFilesSemaphores = new ConcurrentHashMap<>();
 
     public List<Playlist> getAllPlaylists() {
         return playlistRepository.findAll(Sort.by("orderIndex"));
@@ -103,7 +106,7 @@ public class PlaylistService {
     }
 
     @Transactional
-    public void deletePlaylist(Playlist playlist)  {
+    public void deletePlaylist(Playlist playlist) {
         playlistRepository.delete(playlist);
     }
 
@@ -111,7 +114,11 @@ public class PlaylistService {
     //    @CacheEvict(cacheNames="playlist")
     @Transactional
     public AudioFile addAudioFile(Playlist playlist, MultipartFile audioFile, MultipartFile imageFile,
-                             String title, String author, List<String> genres, Float duration) {
+                                  String title, String author, List<String> genres, Float duration) throws IOException, InterruptedException {
+        Semaphore uploadAudioFilesSemaphore = uploadAudioFilesSemaphores.computeIfAbsent(playlist.getId(), k -> new Semaphore(1));
+        uploadAudioFilesSemaphore.acquire();
+        try {
+
         AudioFile audio = new AudioFile();
         audio.setFileName(audioFile.getOriginalFilename());
         audio.setTitle(title);
@@ -119,11 +126,15 @@ public class PlaylistService {
 //        audio.setGenres(genres);
         audio.setDuration(duration);
 
-        try {
+        if (isUsedAWS) {
+            String urlPath = s3Service.uploadFile("audioFiles", audioFile);
+            audio.setUrlPath(urlPath);
+            audio.setData(null);
+        } else {
+            audio.setUrlPath(null);
             audio.setData(audioFile.getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
         if (imageFile != null) {
             Image image = new Image();
             image.setFileName(imageFile.getOriginalFilename());
@@ -146,6 +157,13 @@ public class PlaylistService {
         playlistRepository.save(playlist);
 
         return audio;
+
+        } finally {
+            uploadAudioFilesSemaphore.release();
+            if (uploadAudioFilesSemaphore.availablePermits() == 1) {
+                uploadAudioFilesSemaphores.remove(playlist.getId());
+            }
+        }
     }
 
     @Transactional

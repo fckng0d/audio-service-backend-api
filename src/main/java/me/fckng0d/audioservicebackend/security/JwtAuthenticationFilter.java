@@ -5,7 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import me.fckng0d.audioservicebackend.service.JwtService;
+import me.fckng0d.audioservicebackend.service.jwt.JwtService;
 import me.fckng0d.audioservicebackend.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;

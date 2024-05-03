@@ -12,7 +12,7 @@ import me.fckng0d.audioservicebackend.model.Playlist;
 import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.repositoriy.PlaylistRepository;
-import me.fckng0d.audioservicebackend.service.JwtService;
+import me.fckng0d.audioservicebackend.service.jwt.JwtService;
 import me.fckng0d.audioservicebackend.service.PlaylistService;
 import me.fckng0d.audioservicebackend.service.UserService;
 import org.springframework.http.HttpStatus;

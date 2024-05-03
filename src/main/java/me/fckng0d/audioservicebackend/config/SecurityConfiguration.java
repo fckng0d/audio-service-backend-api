@@ -1,6 +1,7 @@
-package me.fckng0d.audioservicebackend.security;
+package me.fckng0d.audioservicebackend.config;
 
 import lombok.RequiredArgsConstructor;
+import me.fckng0d.audioservicebackend.security.JwtAuthenticationFilter;
 import me.fckng0d.audioservicebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

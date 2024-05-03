@@ -8,6 +8,7 @@ import me.fckng0d.audioservicebackend.model.Playlist;
 import me.fckng0d.audioservicebackend.model.PlaylistContainer;
 import me.fckng0d.audioservicebackend.model.user.UserFavorites;
 import me.fckng0d.audioservicebackend.service.*;
+import me.fckng0d.audioservicebackend.service.jwt.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

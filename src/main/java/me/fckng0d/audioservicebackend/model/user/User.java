@@ -1,6 +1,7 @@
 package me.fckng0d.audioservicebackend.model.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +31,7 @@ public class User implements UserDetails {
 //    private Long id;
 
     @Column(name = "username", nullable = false, unique = true)
+    @Size(min = 5, max = 30)
     private String username;
 
     @Column(name = "password", nullable = false)

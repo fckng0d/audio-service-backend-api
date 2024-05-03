@@ -1,4 +1,4 @@
-package me.fckng0d.audioservicebackend.service;
+package me.fckng0d.audioservicebackend.service.jwt;
 
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
@@ -7,6 +7,7 @@ import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
 import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.model.user.User;
+import me.fckng0d.audioservicebackend.service.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
