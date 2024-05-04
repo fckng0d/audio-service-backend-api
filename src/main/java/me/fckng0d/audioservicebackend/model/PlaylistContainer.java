@@ -3,6 +3,7 @@ package me.fckng0d.audioservicebackend.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +29,7 @@ public class PlaylistContainer {
 
     @Column(name = "name")
     @NotBlank
+    @Size(max = 50)
     private String name;
 
     // не нужно

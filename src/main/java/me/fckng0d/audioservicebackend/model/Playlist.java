@@ -29,8 +29,10 @@ public class Playlist {
     @Size(min = 3, max = 50)
     private String name;
 
+
     @Column(name = "author")
     @NotBlank
+    @Size(max = 50)
     private String author;
 
     @Enumerated(EnumType.STRING)

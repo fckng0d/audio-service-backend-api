@@ -2,6 +2,7 @@ package me.fckng0d.audioservicebackend.controller;
 
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.AudioDataDTO;
+import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
 import me.fckng0d.audioservicebackend.model.AudioFile;
 import me.fckng0d.audioservicebackend.model.Image;
 import me.fckng0d.audioservicebackend.service.AudioFileService;
@@ -61,7 +62,28 @@ public class AudioFileController {
                 return new ResponseEntity<>(audioDataDTO, HttpStatus.OK);
             }
 
-            return new ResponseEntity<>( HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/audio-metadata/{id}")
+    public ResponseEntity<AudioFileDTO> getAudioFileMetadata(@PathVariable UUID id) {
+        try {
+            AudioFile audioFile = audioFileService.getAudioFileById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
+
+            AudioFileDTO audioFileDTO = new AudioFileDTO();
+            audioFileDTO.setTitle(audioFile.getTitle());
+            audioFileDTO.setAuthor(audioFile.getAuthor());
+            audioFileDTO.setImage(audioFile.getImage());
+            audioFileDTO.setDuration(audioFile.getDuration());
+
+            return new ResponseEntity<>(audioFileDTO, HttpStatus.OK);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,7 +108,6 @@ public class AudioFileController {
 //
 //        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 //    }
-
 
 
 //    @GetMapping("/audio-stream/{id}")
