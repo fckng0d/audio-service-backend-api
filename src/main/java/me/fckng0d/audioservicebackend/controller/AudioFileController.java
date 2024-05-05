@@ -1,5 +1,6 @@
 package me.fckng0d.audioservicebackend.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.AudioDataDTO;
 import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 @CrossOrigin(origins = "${cross-origin}", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "audio_files_methods", description = "")
 @RequestMapping("/api")
 public class AudioFileController {
 
@@ -34,15 +37,18 @@ public class AudioFileController {
 
     @GetMapping("/audio/{id}")
 //    @Cacheable("audio_file")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getAudioFile(@PathVariable UUID id) {
         try {
             AudioFile audioFile = audioFileService.getAudioFileById(id)
                     .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
             if (audioFile.getUrlPath() == null) {
+                byte[] audioBytes = audioFile.getAudioData().getData();
+
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-                headers.setContentLength(audioFile.getData().length);
+                headers.setContentLength(audioBytes.length);
                 headers.set("Accept-Ranges", "bytes");
 
 //                String encodedFileName = Base64.getEncoder()
@@ -50,9 +56,9 @@ public class AudioFileController {
 //
 //                headers.setContentDispositionFormData("attachment", encodedFileName);
 
-                return new ResponseEntity<>(audioFile.getData(), headers, HttpStatus.OK);
+                return new ResponseEntity<>(audioBytes, headers, HttpStatus.OK);
 
-            } else if (audioFile.getData() == null) {
+            } else if (audioFile.getAudioData() == null) {
 
                 AudioDataDTO audioDataDTO = AudioDataDTO.builder()
                         .data(null)
@@ -76,11 +82,12 @@ public class AudioFileController {
             AudioFile audioFile = audioFileService.getAudioFileById(id)
                     .orElseThrow(() -> new IllegalArgumentException("AudioFile not found"));
 
-            AudioFileDTO audioFileDTO = new AudioFileDTO();
-            audioFileDTO.setTitle(audioFile.getTitle());
-            audioFileDTO.setAuthor(audioFile.getAuthor());
-            audioFileDTO.setImage(audioFile.getImage());
-            audioFileDTO.setDuration(audioFile.getDuration());
+            AudioFileDTO audioFileDTO = audioFileService.convertToDTO(audioFile);
+//            AudioFileDTO audioFileDTO = new AudioFileDTO();
+//            audioFileDTO.setTitle(audioFile.getTitle());
+//            audioFileDTO.setAuthor(audioFile.getAuthor());
+//            audioFileDTO.setImage(audioFile.getImage());
+//            audioFileDTO.setDuration(audioFile.getDuration());
 
             return new ResponseEntity<>(audioFileDTO, HttpStatus.OK);
 

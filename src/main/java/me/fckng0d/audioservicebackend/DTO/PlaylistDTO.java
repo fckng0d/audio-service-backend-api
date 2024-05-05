@@ -17,5 +17,4 @@ public class PlaylistDTO {
     private Float duration;
     private Image image;
     private Integer orderIndex;
-//    private List<AudioFileDTO> audioFiles;
 }

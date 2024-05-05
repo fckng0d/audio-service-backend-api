@@ -17,6 +17,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_playlist_id", columnList = "id"),
+})
 public class Playlist {
     @Id
     @Column(name = "id")

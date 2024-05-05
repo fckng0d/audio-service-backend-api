@@ -22,8 +22,6 @@ import java.util.UUID;
         @Index(name = "idx_audio_file_id", columnList = "id"),
         @Index(name = "idx_audio_file_title", columnList = "title"),
         @Index(name = "idx_audio_file_author", columnList = "author"),
-//        @Index(name = "idx_audio_file_image_id", columnList = "image_id"),
-//        @Index(name = "idx_playlist_id", columnList = "playlists_id")
 })
 public class AudioFile {
     @Id
@@ -55,10 +53,9 @@ public class AudioFile {
 //    @NotNull
     private List<String> genres;
 
-    @Lob
-    @Column(name = "data")
-//    @NotNull
-    private byte[] data;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "audio_data_id")
+    private AudioData audioData;
 
     @Column(name = "url_path")
     private String urlPath;

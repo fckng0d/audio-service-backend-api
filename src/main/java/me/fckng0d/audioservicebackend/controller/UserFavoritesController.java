@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class UserFavoritesController {
     private final UserService userService;
     private final PlaylistService playlistService;
+    private final AudioFileService audioFileService;
     private final UserFavoritesService userFavoritesService;
     private final PlaylistContainerService playlistContainerService;
     private final JwtService jwtService;
@@ -82,7 +83,7 @@ public class UserFavoritesController {
     @Transactional(readOnly = true)
     public ResponseEntity<PlaylistAudioFilesDTO> getFavoriteAudioFiles(HttpServletRequest request,
                                                                        @RequestParam int startIndex,
-                                                                       @RequestParam int count) throws InterruptedException {
+                                                                       @RequestParam int count) {
 
         String username = jwtService.extractUsernameFromRequest(request);
 
@@ -100,15 +101,7 @@ public class UserFavoritesController {
                                 .skip(startIndex)
                                 .limit(count)
                                 .map(audioFile -> {
-                                    AudioFileDTO dto = new AudioFileDTO();
-                                    dto.setId(audioFile.getId());
-//                            dto.setFileName(audioFile.getFileName());
-                                    dto.setTitle(audioFile.getTitle());
-                                    dto.setAuthor(audioFile.getAuthor());
-                                    dto.setDuration(audioFile.getDuration());
-                                    dto.setCountOfAuditions(audioFile.getCountOfAuditions());
-//                            dto.setGenres(audioFile.getGenres());
-                                    dto.setImage(audioFile.getImage());
+                                    AudioFileDTO dto = audioFileService.convertToDTO(audioFile);
                                     int currentIndex = index.getAndIncrement();
 //                                    System.out.println(currentIndex);
                                     dto.setIndexInPlaylist(currentIndex);

@@ -10,6 +10,6 @@ import java.util.UUID;
 
 @Repository
 public interface AudioFileRepository extends JpaRepository<AudioFile, UUID> {
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"image", "genres"})
+    @EntityGraph(attributePaths = {"image", "genres"}, type = EntityGraph.EntityGraphType.LOAD, value = "audioFile.withoutData")
     Optional<AudioFile> getAudioFileById(UUID id);
 }

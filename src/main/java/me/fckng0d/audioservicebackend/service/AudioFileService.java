@@ -1,10 +1,13 @@
 package me.fckng0d.audioservicebackend.service;
 
+import lombok.RequiredArgsConstructor;
+import me.fckng0d.audioservicebackend.DTO.AudioFileDTO;
+import me.fckng0d.audioservicebackend.model.AudioData;
 import me.fckng0d.audioservicebackend.model.AudioFile;
 import me.fckng0d.audioservicebackend.model.Image;
+import me.fckng0d.audioservicebackend.repositoriy.AudioDataRepository;
 import me.fckng0d.audioservicebackend.repositoriy.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositoriy.ImageRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,18 +21,35 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 @Service
+@RequiredArgsConstructor
 public class AudioFileService {
     private final AudioFileRepository audioFileRepository;
+    private final AudioDataRepository audioDataRepository;
     private final ImageRepository imageRepository;
     private final Map<UUID, Semaphore> audioFileSemaphores = new ConcurrentHashMap<>();
 
-    @Autowired
-    public AudioFileService(AudioFileRepository audioFileRepository, ImageRepository imageRepository) {
-        this.audioFileRepository = audioFileRepository;
-        this.imageRepository = imageRepository;
+
+    public AudioFileDTO convertToDTO(AudioFile audioFile) {
+        AudioFileDTO dto = new AudioFileDTO();
+        dto.setId(audioFile.getId());
+            // dto.setFileName(audioFile.getFileName());
+        dto.setTitle(audioFile.getTitle());
+        dto.setAuthor(audioFile.getAuthor());
+        dto.setDuration(audioFile.getDuration());
+        dto.setCountOfAuditions(audioFile.getCountOfAuditions());
+            // dto.setGenres(audioFile.getGenres());
+        dto.setImage(audioFile.getImage());
+        return dto;
     }
 
-    //    @Transactional(propagation = Propagation.REQUIRED)
+    public List<AudioFileDTO> convertListToDTOs(List<AudioFile> audioFiles) {
+        List<AudioFileDTO> audioFileDTOS = audioFiles.stream()
+                .map(this::convertToDTO)
+                .toList();
+
+        return audioFileDTOS;
+    }
+
     @Transactional
     public void saveAudioFile(MultipartFile audioFile, MultipartFile imageFile,
                               String title, String author, List<String> genres, Float duration) {
@@ -41,7 +61,11 @@ public class AudioFileService {
         audio.setDuration(duration);
 
         try {
-            audio.setData(audioFile.getBytes());
+            AudioData audioData = new AudioData();
+            audioData.setData(audioFile.getBytes());
+            audioDataRepository.save(audioData);
+
+            audio.setAudioData(audioData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

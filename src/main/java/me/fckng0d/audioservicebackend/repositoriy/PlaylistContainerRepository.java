@@ -11,6 +11,7 @@ import java.util.UUID;
 @Repository
 public interface PlaylistContainerRepository extends JpaRepository<PlaylistContainer, UUID>,
         JpaSpecificationExecutor<PlaylistContainer> {
+
     Optional<PlaylistContainer> getPlaylistContainerById(UUID id);
 //    List<PlaylistContainer> findAll(Specification<PlaylistContainer> spec);
 }

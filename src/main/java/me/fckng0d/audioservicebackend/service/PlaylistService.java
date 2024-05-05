@@ -2,10 +2,12 @@ package me.fckng0d.audioservicebackend.service;
 
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.PlaylistDTO;
+import me.fckng0d.audioservicebackend.model.AudioData;
 import me.fckng0d.audioservicebackend.model.AudioFile;
 import me.fckng0d.audioservicebackend.model.Image;
 import me.fckng0d.audioservicebackend.model.Playlist;
 import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
+import me.fckng0d.audioservicebackend.repositoriy.AudioDataRepository;
 import me.fckng0d.audioservicebackend.repositoriy.AudioFileRepository;
 import me.fckng0d.audioservicebackend.repositoriy.ImageRepository;
 import me.fckng0d.audioservicebackend.repositoriy.PlaylistRepository;
@@ -25,10 +27,10 @@ import java.util.concurrent.Semaphore;
 public class PlaylistService {
     @Value("${app.isUsedAWS}")
     private boolean isUsedAWS;
-
     private final S3Service s3Service;
 
     private final AudioFileRepository audioFileRepository;
+    private final AudioDataRepository audioDataRepository;
     private final PlaylistRepository playlistRepository;
     private final ImageRepository imageRepository;
     private final ImageService imageService;
@@ -119,44 +121,48 @@ public class PlaylistService {
         uploadAudioFilesSemaphore.acquire();
         try {
 
-        AudioFile audio = new AudioFile();
-        audio.setFileName(audioFile.getOriginalFilename());
-        audio.setTitle(title);
-        audio.setAuthor(author);
+            AudioFile audio = new AudioFile();
+            audio.setFileName(audioFile.getOriginalFilename());
+            audio.setTitle(title);
+            audio.setAuthor(author);
 //        audio.setGenres(genres);
-        audio.setDuration(duration);
+            audio.setDuration(duration);
 
-        if (isUsedAWS) {
-            String urlPath = s3Service.uploadFile("audioFiles", audioFile);
-            audio.setUrlPath(urlPath);
-            audio.setData(null);
-        } else {
-            audio.setUrlPath(null);
-            audio.setData(audioFile.getBytes());
-        }
+            if (isUsedAWS) {
+                String urlPath = s3Service.uploadFile("audioFiles", audioFile);
+                audio.setUrlPath(urlPath);
+                audio.setAudioData(null);
+            } else {
+                AudioData audioData = new AudioData();
+                audioData.setData(audioFile.getBytes());
+                audioDataRepository.save(audioData);
 
-        if (imageFile != null) {
-            Image image = new Image();
-            image.setFileName(imageFile.getOriginalFilename());
-            try {
-                image.setData(imageFile.getBytes());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                audio.setUrlPath(null);
+                audio.setAudioData(audioData);
             }
 
-            imageRepository.save(image);
-            audio.setImage(image);
-        }
+            if (imageFile != null) {
+                Image image = new Image();
+                image.setFileName(imageFile.getOriginalFilename());
+                try {
+                    image.setData(imageFile.getBytes());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
-        playlist.setCountOfAudio(playlist.getCountOfAudio() + 1);
-        playlist.setDuration(playlist.getDuration() + duration);
+                imageRepository.save(image);
+                audio.setImage(image);
+            }
 
-        audio.getPlaylists().add(playlist);
-        audioFileRepository.save(audio);
-        playlist.getAudioFiles().add(0, audio);
-        playlistRepository.save(playlist);
+            playlist.setCountOfAudio(playlist.getCountOfAudio() + 1);
+            playlist.setDuration(playlist.getDuration() + duration);
 
-        return audio;
+            audio.getPlaylists().add(playlist);
+            audioFileRepository.save(audio);
+            playlist.getAudioFiles().add(0, audio);
+            playlistRepository.save(playlist);
+
+            return audio;
 
         } finally {
             uploadAudioFilesSemaphore.release();

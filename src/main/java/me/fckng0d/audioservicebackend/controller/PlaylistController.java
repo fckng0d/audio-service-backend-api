@@ -12,12 +12,12 @@ import me.fckng0d.audioservicebackend.model.Playlist;
 import me.fckng0d.audioservicebackend.model.enums.PlayListOwnerEnum;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
 import me.fckng0d.audioservicebackend.repositoriy.PlaylistRepository;
-import me.fckng0d.audioservicebackend.service.jwt.JwtService;
+import me.fckng0d.audioservicebackend.service.AudioFileService;
 import me.fckng0d.audioservicebackend.service.PlaylistService;
 import me.fckng0d.audioservicebackend.service.UserService;
+import me.fckng0d.audioservicebackend.service.jwt.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class PlaylistController {
     private final PlaylistService playlistService;
     private final PlaylistRepository playlistRepository;
-    private final PlatformTransactionManager transactionManager;
+    private final AudioFileService audioFileService;
     private final JwtService jwtService;
     private final UserService userService;
     private final Semaphore audioFilesSemaphore = new Semaphore(1);
@@ -55,7 +55,6 @@ public class PlaylistController {
                 Playlist playlist = optionalPlaylist.get();
 
                 String username = jwtService.extractUsernameFromRequest(request);
-
                 UserRoleEnum userRole = userService.getRoleByUsername(username);
 
                 if (playlist.getPlaylistOwnerRole() == PlayListOwnerEnum.USER) {
@@ -64,14 +63,7 @@ public class PlaylistController {
                     }
                 }
 
-                PlaylistDTO playlistDTO = new PlaylistDTO();
-                playlistDTO.setId(playlist.getId());
-                playlistDTO.setName(playlist.getName());
-                playlistDTO.setAuthor(playlist.getAuthor());
-                playlistDTO.setPlaylistOwnerRole(playlist.getPlaylistOwnerRole());
-                playlistDTO.setDuration(playlist.getDuration());
-                playlistDTO.setCountOfAudio(playlist.getCountOfAudio());
-                playlistDTO.setImage(playlist.getImage());
+                PlaylistDTO playlistDTO = playlistService.convertToDTO(playlist);
 
                 return new ResponseEntity<>(playlistDTO, HttpStatus.OK);
             } else {
@@ -88,25 +80,18 @@ public class PlaylistController {
 
     @GetMapping("/playlists/{id}/audioFiles/partial")
     @Transactional(readOnly = true)
-    public ResponseEntity<PlaylistAudioFilesDTO> getPlaylistById(HttpServletRequest request,
-                                                                 @PathVariable UUID id,
-                                                                 @RequestParam int startIndex,
-                                                                 @RequestParam int count) throws InterruptedException {
+    public ResponseEntity<PlaylistAudioFilesDTO> getAudioFilesPartial(HttpServletRequest request,
+            @PathVariable UUID id,
+            @RequestParam int startIndex,
+            @RequestParam int count) {
 
         try {
+//            long start = System.currentTimeMillis();
+
             Optional<Playlist> optionalPlaylist = playlistService.getPlaylistById(id);
 
             if (optionalPlaylist.isPresent()) {
                 Playlist playlist = optionalPlaylist.get();
-
-                String username = jwtService.extractUsernameFromRequest(request);
-                UserRoleEnum userRole = userService.getRoleByUsername(username);
-
-                if (playlist.getPlaylistOwnerRole() == PlayListOwnerEnum.USER) {
-                    if (!playlist.getOwnerUsername().equals(username) && userRole != UserRoleEnum.ROLE_ADMIN) {
-                        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-                    }
-                }
 
 //                int totalCount = playlist.getAudioFiles().size();
 //                int availableCount = Math.min(count, totalCount - startIndex);
@@ -126,17 +111,9 @@ public class PlaylistController {
                                 .skip(startIndex)
                                 .limit(count)
                                 .map(audioFile -> {
-                                    AudioFileDTO dto = new AudioFileDTO();
-                                    dto.setId(audioFile.getId());
-//                            dto.setFileName(audioFile.getFileName());
-                                    dto.setTitle(audioFile.getTitle());
-                                    dto.setAuthor(audioFile.getAuthor());
-                                    dto.setDuration(audioFile.getDuration());
-                                    dto.setCountOfAuditions(audioFile.getCountOfAuditions());
-//                            dto.setGenres(audioFile.getGenres());
-                                    dto.setImage(audioFile.getImage());
+                                    AudioFileDTO dto = audioFileService.convertToDTO(audioFile);
                                     int currentIndex = index.getAndIncrement();
-//                            System.out.println(index.getAndIncrement());
+                                    // System.out.println(index.getAndIncrement());
                                     dto.setIndexInPlaylist(currentIndex);
                                     return dto;
                                 })
@@ -148,6 +125,9 @@ public class PlaylistController {
                         .playlistId(playlist.getId())
                         .audioFiles(audioFileDTOs)
                         .build();
+
+//                long end = System.currentTimeMillis();
+//                System.out.println(end - start + " мс");
 
                 return new ResponseEntity<>(playlistAudioFilesDTO, HttpStatus.OK);
             } else {
@@ -212,12 +192,12 @@ public class PlaylistController {
     @PostMapping("/playlists/{playlistId}/upload")
     @Transactional
     public ResponseEntity<AudioFileDTO> uploadAudioFile(@PathVariable UUID playlistId,
-                                                  @RequestParam("title") String title,
-                                                  @RequestParam("author") String author,
-                                                  @RequestParam("audioFile") MultipartFile audioFile,
-                                                  @RequestParam("imageFile") MultipartFile imageFile,
+                                                        @RequestParam("title") String title,
+                                                        @RequestParam("author") String author,
+                                                        @RequestParam("audioFile") MultipartFile audioFile,
+                                                        @RequestParam("imageFile") MultipartFile imageFile,
 //                                                  @RequestParam("genres") List<String> genres,
-                                                  @RequestParam("duration") Float duration) {
+                                                        @RequestParam("duration") Float duration) {
 
         try {
             Playlist playlist = playlistRepository.findById(playlistId)
@@ -227,16 +207,9 @@ public class PlaylistController {
                 return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            AudioFile audioFileResponse =  playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
+            AudioFile audioFileResponse = playlistService.addAudioFile(playlist, audioFile, imageFile, title, author, null, duration);
 
-            AudioFileDTO dto = new AudioFileDTO();
-            dto.setId(audioFileResponse.getId());
-            dto.setTitle(audioFileResponse.getTitle());
-            dto.setAuthor(audioFileResponse.getAuthor());
-            dto.setDuration(audioFileResponse.getDuration());
-            dto.setCountOfAuditions(audioFileResponse.getCountOfAuditions());
-            dto.setImage(audioFileResponse.getImage());
-            dto.setIndexInPlaylist(0);
+            AudioFileDTO dto = audioFileService.convertToDTO(audioFileResponse);
 
             return new ResponseEntity<>(dto, HttpStatus.OK);
         } catch (Exception e) {
