@@ -7,12 +7,11 @@ import me.fckng0d.audioservicebackend.DTO.JwtAuthenticationResponse;
 import me.fckng0d.audioservicebackend.DTO.SignInRequest;
 import me.fckng0d.audioservicebackend.DTO.SignUpRequest;
 import me.fckng0d.audioservicebackend.DTO.TokenValidationRequest;
-import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
 import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
+import me.fckng0d.audioservicebackend.service.UserService;
 import me.fckng0d.audioservicebackend.service.jwt.AuthenticationService;
 import me.fckng0d.audioservicebackend.service.jwt.JwtService;
-import me.fckng0d.audioservicebackend.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -65,12 +64,16 @@ public class AuthController {
             String username = jwtService.extractUsernameFromRequest(request);
             UserRoleEnum userRole = userService.getRoleByUsername(username);
 
-            if (userRole.equals(UserRoleEnum.ROLE_ADMIN)) {
-                return new ResponseEntity<>(true, HttpStatus.OK);
+            if (username != null) {
+                if (userRole.equals(UserRoleEnum.ROLE_ADMIN)) {
+                    return new ResponseEntity<>(true, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(false, HttpStatus.OK);
+                }
             } else {
-                return new ResponseEntity<>(false, HttpStatus.FORBIDDEN);
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
-        } catch (AudioFileIsAlreadyInPlaylistException e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

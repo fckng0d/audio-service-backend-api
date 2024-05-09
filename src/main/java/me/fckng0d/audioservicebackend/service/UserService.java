@@ -3,6 +3,7 @@ package me.fckng0d.audioservicebackend.service;
 import lombok.RequiredArgsConstructor;
 import me.fckng0d.audioservicebackend.DTO.UserProfileDTO;
 import me.fckng0d.audioservicebackend.exception.AudioFileIsAlreadyInPlaylistException;
+import me.fckng0d.audioservicebackend.exception.UserNotFoundException;
 import me.fckng0d.audioservicebackend.model.Image;
 import me.fckng0d.audioservicebackend.model.PlaylistContainer;
 import me.fckng0d.audioservicebackend.model.enums.UserRoleEnum;
@@ -83,7 +84,7 @@ public class UserService {
      */
     public User getByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
 
     }
 
@@ -94,7 +95,7 @@ public class UserService {
      */
     public User getByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
 
     }
 
